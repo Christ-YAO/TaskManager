@@ -195,6 +195,25 @@ button {
   max-height: 500px;
 }
 
+/* Footer positioning */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+footer {
+  margin-top: auto;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .kanban-column {

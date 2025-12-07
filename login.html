@@ -52,7 +52,7 @@
     </script>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-background min-h-screen font-sans relative overflow-x-hidden">
+<body class="bg-background min-h-screen font-sans relative overflow-x-hidden flex flex-col">
     <!-- Gradient Effects -->
     <div
       class="absolute inset-x-0 bottom-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:bottom-[calc(100%-30rem)]"
@@ -151,7 +151,7 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="relative">
+    <div class="relative flex-1">
       <div class="flex items-center justify-center min-h-[calc(50vh-4rem)] pt-32 pb-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8">
             <!-- Logo -->
@@ -272,7 +272,7 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-black/5 border-t border-black/10 pt-20 pb-8 mt-24">
+    <footer class="bg-black/5 border-t border-black/10 pt-20 pb-8 mt-auto">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div class="md:col-span-1">
@@ -397,7 +397,7 @@
           </div>
         </div>
         <div
-          class="border-t border-black/10 pt-8 text-center text-black/40 text-xs font-light"
+          class="border-t border-black/10 py-8 text-center text-black/40 text-xs font-light"
         >
           <p>&copy; 2024 TaskManager. Tous droits réservés.</p>
         </div>

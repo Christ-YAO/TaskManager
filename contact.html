@@ -55,24 +55,66 @@
     </script>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="bg-white min-h-screen font-sans relative overflow-x-hidden">
+  <body
+    class="bg-white min-h-screen font-sans relative overflow-x-hidden flex flex-col"
+  >
     <!-- Gradient Effects -->
     <div
-      class="absolute inset-x-0 bottom-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:bottom-[calc(100%-30rem)]"
+      class="fixed inset-x-0 bottom-0 -z-10 transform-gpu overflow-hidden blur-3xl pointer-events-none"
       aria-hidden="true"
+      style="height: 300px"
     >
       <div
-        class="relative left-[calc(10%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#22c55e] to-[#059669] opacity-30 sm:left-[calc(10%+36rem)] sm:w-[72.1875rem]"
-        style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"
+        class="absolute bottom-0 left-[calc(10%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#22c55e] to-[#059669] opacity-20 sm:left-[calc(10%+36rem)] sm:w-[72.1875rem]"
+        style="
+          clip-path: polygon(
+            74.1% 44.1%,
+            100% 61.6%,
+            97.5% 26.9%,
+            85.5% 0.1%,
+            80.7% 2%,
+            72.5% 32.5%,
+            60.2% 62.4%,
+            52.4% 68.1%,
+            47.5% 58.3%,
+            45.2% 34.5%,
+            27.5% 76.7%,
+            0.1% 64.9%,
+            17.9% 100%,
+            27.6% 76.8%,
+            76.1% 97.7%,
+            74.1% 44.1%
+          );
+        "
       ></div>
     </div>
     <div
-      class="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
+      class="fixed inset-x-0 top-0 -z-10 transform-gpu overflow-hidden blur-3xl pointer-events-none"
       aria-hidden="true"
+      style="height: 300px"
     >
       <div
-        class="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#de1414] to-[#2f0df2] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"
-        style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"
+        class="absolute top-0 left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#de1414] to-[#2f0df2] opacity-20 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"
+        style="
+          clip-path: polygon(
+            74.1% 44.1%,
+            100% 61.6%,
+            97.5% 26.9%,
+            85.5% 0.1%,
+            80.7% 2%,
+            72.5% 32.5%,
+            60.2% 62.4%,
+            52.4% 68.1%,
+            47.5% 58.3%,
+            45.2% 34.5%,
+            27.5% 76.7%,
+            0.1% 64.9%,
+            17.9% 100%,
+            27.6% 76.8%,
+            76.1% 97.7%,
+            74.1% 44.1%
+          );
+        "
       ></div>
     </div>
 
@@ -89,12 +131,17 @@
               ></div>
               <div
                 class="relative w-16 h-16 bg-gradient-to-br from-[#22c55e] via-[#059669] to-[#2f0df2] rounded-2xl flex items-center justify-center shadow-2xl group-hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] group-hover:scale-110 transition-all duration-300 transform-gpu"
-                style="box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);"
+                style="
+                  box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                "
               >
-                <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
+                <div
+                  class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"
+                ></div>
                 <span
                   class="font-logo text-white text-3xl font-black tracking-tight relative z-10"
-                  style="text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"
+                  style="text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2)"
                   >TM</span
                 >
               </div>
@@ -104,7 +151,9 @@
               >TaskManager</span
             >
           </a>
-          <div class="hidden md:flex items-center absolute left-1/2 transform -translate-x-1/2 space-x-8">
+          <div
+            class="hidden md:flex items-center absolute left-1/2 transform -translate-x-1/2 space-x-8"
+          >
             <a
               href="index.html"
               class="text-black/70 hover:text-black font-medium text-sm transition-colors relative group"
@@ -155,7 +204,9 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 relative">
+    <section
+      class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 relative"
+    >
       <div class="text-center mb-12">
         <h1
           class="text-5xl md:text-6xl font-bold tracking-tight text-gray-900 mb-4"
@@ -165,7 +216,8 @@
         <p
           class="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed"
         >
-          Nous sommes là pour vous aider. N'hésitez pas à nous contacter pour toute question.
+          Nous sommes là pour vous aider. N'hésitez pas à nous contacter pour
+          toute question.
         </p>
       </div>
     </section>
@@ -174,15 +226,30 @@
     <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div>
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">Envoyez-nous un message</h2>
+          <h2 class="text-3xl font-bold text-gray-900 mb-4">
+            Envoyez-nous un message
+          </h2>
           <p class="text-gray-600 leading-relaxed mb-6">
-            Remplissez le formulaire ci-contre et nous vous répondrons dans les plus brefs délais.
+            Remplissez le formulaire ci-contre et nous vous répondrons dans les
+            plus brefs délais.
           </p>
           <div class="space-y-4">
             <div class="flex items-start space-x-3">
-              <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              <div
+                class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0"
+              >
+                <svg
+                  class="w-5 h-5 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  ></path>
                 </svg>
               </div>
               <div>
@@ -191,9 +258,21 @@
               </div>
             </div>
             <div class="flex items-start space-x-3">
-              <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+              <div
+                class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0"
+              >
+                <svg
+                  class="w-5 h-5 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                  ></path>
                 </svg>
               </div>
               <div>
@@ -202,15 +281,34 @@
               </div>
             </div>
             <div class="flex items-start space-x-3">
-              <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <div
+                class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0"
+              >
+                <svg
+                  class="w-5 h-5 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  ></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  ></path>
                 </svg>
               </div>
               <div>
                 <h3 class="font-semibold text-gray-900 mb-1">Adresse</h3>
-                <p class="text-gray-600 text-sm">123 Rue de la Productivité<br>75001 Paris, France</p>
+                <p class="text-gray-600 text-sm">
+                  123 Rue de la Productivité<br />75001 Paris, France
+                </p>
               </div>
             </div>
           </div>
@@ -218,7 +316,11 @@
         <div class="bg-white rounded-xl p-8 border border-gray-200">
           <form class="space-y-6">
             <div>
-              <label for="name" class="block text-sm font-medium text-gray-900 mb-2">Nom complet</label>
+              <label
+                for="name"
+                class="block text-sm font-medium text-gray-900 mb-2"
+                >Nom complet</label
+              >
               <input
                 type="text"
                 id="name"
@@ -229,7 +331,11 @@
               />
             </div>
             <div>
-              <label for="email" class="block text-sm font-medium text-gray-900 mb-2">Email</label>
+              <label
+                for="email"
+                class="block text-sm font-medium text-gray-900 mb-2"
+                >Email</label
+              >
               <input
                 type="email"
                 id="email"
@@ -240,7 +346,11 @@
               />
             </div>
             <div>
-              <label for="subject" class="block text-sm font-medium text-gray-900 mb-2">Sujet</label>
+              <label
+                for="subject"
+                class="block text-sm font-medium text-gray-900 mb-2"
+                >Sujet</label
+              >
               <input
                 type="text"
                 id="subject"
@@ -251,7 +361,11 @@
               />
             </div>
             <div>
-              <label for="message" class="block text-sm font-medium text-gray-900 mb-2">Message</label>
+              <label
+                for="message"
+                class="block text-sm font-medium text-gray-900 mb-2"
+                >Message</label
+              >
               <textarea
                 id="message"
                 name="message"
@@ -273,7 +387,7 @@
     </section>
 
     <!-- Footer -->
-    <footer class="bg-black/5 border-t border-black/10 pt-20 pb-8 mt-24">
+    <footer class="bg-black/5 border-t border-black/10 pt-20 pb-8 mt-auto">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div class="md:col-span-1">
@@ -291,7 +405,8 @@
                   >
                 </div>
               </div>
-              <span class="text-lg font-black text-black tracking-tighter font-logo"
+              <span
+                class="text-lg font-black text-black tracking-tighter font-logo"
                 >TaskManager</span
               >
             </a>
@@ -398,7 +513,7 @@
           </div>
         </div>
         <div
-          class="border-t border-black/10 pt-8 text-center text-black/40 text-xs font-light"
+          class="border-t border-black/10 py-8 text-center text-black/40 text-xs font-light"
         >
           <p>&copy; 2024 TaskManager. Tous droits réservés.</p>
         </div>
@@ -406,4 +521,3 @@
     </footer>
   </body>
 </html>
-

@@ -56,11 +56,11 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body
-    class="bg-white min-h-screen font-sans relative overflow-x-hidden"
+    class="bg-white min-h-screen font-sans relative overflow-x-hidden flex flex-col"
     style="font-family: 'Geist Sans', system-ui, sans-serif"
   >
     <!-- Gradient Effects -->
-    {{/*
+
     <div
       class="absolute inset-x-0 bottom-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:bottom-[calc(100%-30rem)]"
       aria-hidden="true"
@@ -117,7 +117,6 @@
         "
       ></div>
     </div>
-    */}}
     <!-- Navigation -->
     <nav
       class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/70 border-b border-black/5"
@@ -808,7 +807,7 @@
     </section>
 
     <!-- Footer -->
-    <footer class="bg-black/5 border-t border-black/10 pt-20 pb-8 mt-24">
+    <footer class="bg-black/5 border-t border-black/10 pt-20 pb-8 mt-auto">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div class="md:col-span-1">
@@ -934,7 +933,7 @@
           </div>
         </div>
         <div
-          class="border-t border-black/10 pt-8 text-center text-black/40 text-xs font-light"
+          class="border-t border-black/10 py-8 text-center text-black/40 text-xs font-light"
         >
           <p>&copy; 2024 TaskManager. Tous droits réservés.</p>
         </div>
