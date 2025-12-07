@@ -4,12 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="assets/logo.png" />
-    <title>Connexion - Todo-App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>Connexion - TaskManager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
             colors: {
               border: "hsl(214.3 31.8% 91.4%)",
               input: "hsl(214.3 31.8% 91.4%)",
@@ -44,16 +50,17 @@
     </script>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-background min-h-screen">
+<body class="bg-background min-h-screen font-sans">
     <!-- Navigation -->
     <nav class="bg-background border-b border-border sticky top-0 z-50">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <a href="index.html" class="flex items-center space-x-3 hover:opacity-80 transition-opacity group">
-            <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-                <span class="text-primary-foreground font-bold text-xl">T</span>
+            <div class="relative w-11 h-11 bg-gradient-to-br from-primary via-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all group-hover:scale-105 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                <span class="relative text-primary-foreground font-extrabold text-lg tracking-tight">TM</span>
             </div>
-            <span class="text-xl font-bold text-foreground bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Todo-App</span>
+            <span class="text-xl font-bold text-foreground bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent tracking-tight">TaskManager</span>
         </a>
           <div class="flex items-center space-x-4">
             <a
@@ -202,14 +209,15 @@
               class="flex items-center space-x-2 mb-4 hover:opacity-80 transition-opacity"
             >
               <div
-                class="w-8 h-8 bg-primary rounded-md flex items-center justify-center"
+                class="relative w-8 h-8 bg-gradient-to-br from-primary via-primary to-primary/70 rounded-md flex items-center justify-center overflow-hidden"
               >
-                <span class="text-primary-foreground font-semibold text-lg"
-                  >T</span
+                <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                <span class="relative text-primary-foreground font-extrabold text-xs tracking-tight"
+                  >TM</span
                 >
               </div>
               <span class="text-lg font-semibold text-foreground"
-                >Todo-App</span
+                >TaskManager</span
               >
             </a>
             <p class="text-muted-foreground text-sm">
@@ -280,7 +288,7 @@
         <div
           class="border-t border-border mt-8 pt-8 text-center text-muted-foreground text-sm"
         >
-          <p>&copy; 2024 Todo-App. Tous droits réservés.</p>
+          <p>&copy; 2024 TaskManager. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

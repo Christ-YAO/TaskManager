@@ -1,4 +1,4 @@
-# Todo-App - Application Kanban Moderne
+# TaskManager - Application Kanban Moderne
 
 Une application de gestion de tâches moderne et personnalisée construite avec HTML, CSS, JavaScript et TailwindCSS, inspirée du design shadcn/ui.
 
@@ -24,7 +24,7 @@ Une application de gestion de tâches moderne et personnalisée construite avec 
 ## 📁 Structure du projet
 
 ```
-Todo-App/
+TaskManager/
 ├── index.html          # Page d'accueil
 ├── login.html          # Page de connexion/inscription
 ├── dashboard.html      # Tableau de bord
