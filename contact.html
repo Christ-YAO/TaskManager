@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="assets/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist+Sans:wght@100;200;300;400;500;600;700;800;900&family=Geist+Mono:wght@100;200;300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <title>Nous contacter - TaskManager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Geist Sans", "system-ui", "sans-serif"],
+              mono: ["Geist Mono", "monospace"],
+              logo: ["Playfair Display", "serif"],
+            },
+            colors: {
+              border: "hsl(214.3 31.8% 91.4%)",
+              input: "hsl(214.3 31.8% 91.4%)",
+              ring: "hsl(221.2 83.2% 53.3%)",
+              background: "hsl(0 0% 100%)",
+              foreground: "hsl(222.2 84% 4.9%)",
+              primary: {
+                DEFAULT: "hsl(221.2 83.2% 53.3%)",
+                foreground: "hsl(210 40% 98%)",
+              },
+              secondary: {
+                DEFAULT: "hsl(210 40% 96.1%)",
+                foreground: "hsl(222.2 47.4% 11.2%)",
+              },
+              muted: {
+                DEFAULT: "hsl(210 40% 96.1%)",
+                foreground: "hsl(215.4 16.3% 46.9%)",
+              },
+              accent: {
+                DEFAULT: "hsl(210 40% 96.1%)",
+                foreground: "hsl(222.2 47.4% 11.2%)",
+              },
+            },
+            borderRadius: {
+              lg: "0.5rem",
+              md: "calc(0.5rem - 2px)",
+              sm: "calc(0.5rem - 4px)",
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="bg-white min-h-screen font-sans relative overflow-x-hidden">
+    <!-- Gradient Effects -->
+    <div
+      class="absolute inset-x-0 bottom-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:bottom-[calc(100%-30rem)]"
+      aria-hidden="true"
+    >
+      <div
+        class="relative left-[calc(10%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#22c55e] to-[#059669] opacity-30 sm:left-[calc(10%+36rem)] sm:w-[72.1875rem]"
+        style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"
+      ></div>
+    </div>
+    <div
+      class="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
+      aria-hidden="true"
+    >
+      <div
+        class="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#de1414] to-[#2f0df2] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"
+        style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"
+      ></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/70 border-b border-black/5"
+    >
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+          <a href="index.html" class="flex items-center space-x-4 group">
+            <div class="relative">
+              <div
+                class="absolute inset-0 bg-gradient-to-br from-[#22c55e] via-[#059669] to-[#de1414] rounded-2xl blur-sm opacity-50 group-hover:opacity-75 transition-opacity"
+              ></div>
+              <div
+                class="relative w-14 h-14 bg-gradient-to-br from-[#22c55e] via-[#059669] to-[#2f0df2] rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"
+              >
+                <span
+                  class="font-logo text-white text-2xl font-bold tracking-wider"
+                  >TM</span
+                >
+              </div>
+            </div>
+            <span
+              class="text-2xl font-bold text-black tracking-tighter font-sans"
+              >TaskManager</span
+            >
+          </a>
+          <div class="hidden md:flex items-center absolute left-1/2 transform -translate-x-1/2 space-x-8">
+            <a
+              href="index.html"
+              class="text-black/70 hover:text-black font-medium text-sm transition-colors relative group"
+            >
+              Accueil
+              <span
+                class="absolute bottom-0 left-0 w-0 h-0.5 bg-black group-hover:w-full transition-all duration-300"
+              ></span>
+            </a>
+            <a
+              href="about.html"
+              class="text-black/70 hover:text-black font-medium text-sm transition-colors relative group"
+            >
+              À propos
+              <span
+                class="absolute bottom-0 left-0 w-0 h-0.5 bg-black group-hover:w-full transition-all duration-300"
+              ></span>
+            </a>
+            <a
+              href="contact.html"
+              class="text-black/70 hover:text-black font-medium text-sm transition-colors relative group"
+            >
+              Contact
+              <span
+                class="absolute bottom-0 left-0 w-0 h-0.5 bg-black group-hover:w-full transition-all duration-300"
+              ></span>
+            </a>
+          </div>
+          <div class="flex items-center">
+            <a
+              href="login.html"
+              class="bg-black text-white px-6 py-2.5 rounded-full font-semibold hover:bg-black/90 transition-all text-sm inline-flex items-center justify-center shadow-lg hover:shadow-xl"
+            >
+              Se connecter
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative">
+      <div class="text-center mb-12">
+        <h1
+          class="text-5xl md:text-6xl font-bold tracking-tight text-gray-900 mb-4"
+        >
+          Contactez-nous
+        </h1>
+        <p
+          class="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed"
+        >
+          Nous sommes là pour vous aider. N'hésitez pas à nous contacter pour toute question.
+        </p>
+      </div>
+    </section>
+
+    <!-- Contact Form Section -->
+    <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-4">Envoyez-nous un message</h2>
+          <p class="text-gray-600 leading-relaxed mb-6">
+            Remplissez le formulaire ci-contre et nous vous répondrons dans les plus brefs délais.
+          </p>
+          <div class="space-y-4">
+            <div class="flex items-start space-x-3">
+              <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-1">Email</h3>
+                <p class="text-gray-600 text-sm">contact@taskmanager.com</p>
+              </div>
+            </div>
+            <div class="flex items-start space-x-3">
+              <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-1">Téléphone</h3>
+                <p class="text-gray-600 text-sm">+33 1 23 45 67 89</p>
+              </div>
+            </div>
+            <div class="flex items-start space-x-3">
+              <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-1">Adresse</h3>
+                <p class="text-gray-600 text-sm">123 Rue de la Productivité<br>75001 Paris, France</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl p-8 border border-gray-200">
+          <form class="space-y-6">
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-900 mb-2">Nom complet</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                placeholder="Votre nom"
+              />
+            </div>
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-900 mb-2">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                placeholder="votre@email.com"
+              />
+            </div>
+            <div>
+              <label for="subject" class="block text-sm font-medium text-gray-900 mb-2">Sujet</label>
+              <input
+                type="text"
+                id="subject"
+                name="subject"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                placeholder="Objet de votre message"
+              />
+            </div>
+            <div>
+              <label for="message" class="block text-sm font-medium text-gray-900 mb-2">Message</label>
+              <textarea
+                id="message"
+                name="message"
+                rows="5"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
+                placeholder="Votre message..."
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+            >
+              Envoyer le message
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4">
+          Questions fréquentes
+        </h2>
+      </div>
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Comment puis-je commencer ?</h3>
+          <p class="text-gray-600 text-sm">
+            Créez simplement un compte gratuit et commencez à organiser vos projets immédiatement. Aucune configuration complexe nécessaire.
+          </p>
+        </div>
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Y a-t-il une limite au nombre de projets ?</h3>
+          <p class="text-gray-600 text-sm">
+            Non, vous pouvez créer un nombre illimité de projets avec votre compte gratuit.
+          </p>
+        </div>
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Puis-je inviter mon équipe ?</h3>
+          <p class="text-gray-600 text-sm">
+            Oui, vous pouvez inviter autant de membres d'équipe que vous le souhaitez pour collaborer sur vos projets.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 pt-12 pb-0 mt-12 mb-0">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <a href="index.html" class="flex items-center space-x-2 mb-4">
+              <div
+                class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"
+              >
+                <span class="text-white font-extrabold text-xs tracking-tight"
+                  >TM</span
+                >
+              </div>
+              <span class="text-base font-bold text-gray-900">TaskManager</span>
+            </a>
+            <p class="text-gray-600 text-sm">
+              Organisez votre travail, libérez votre esprit.
+            </p>
+          </div>
+          <div>
+            <h4 class="font-semibold mb-4 text-gray-900 text-sm">Produit</h4>
+            <ul class="space-y-2 text-gray-600 text-sm">
+              <li>
+                <a href="#features" class="hover:text-gray-900 transition-colors"
+                  >Fonctionnalités</a
+                >
+              </li>
+              <li>
+                <a href="#" class="hover:text-gray-900 transition-colors"
+                  >Tarifs</a
+                >
+              </li>
+              <li>
+                <a href="#" class="hover:text-gray-900 transition-colors"
+                  >Templates</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-semibold mb-4 text-gray-900 text-sm">Entreprise</h4>
+            <ul class="space-y-2 text-gray-600 text-sm">
+              <li>
+                <a href="about.html" class="hover:text-gray-900 transition-colors"
+                  >À propos</a
+                >
+              </li>
+              <li>
+                <a href="#" class="hover:text-gray-900 transition-colors"
+                  >Carrières</a
+                >
+              </li>
+              <li>
+                <a href="contact.html" class="hover:text-gray-900 transition-colors"
+                  >Contact</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-semibold mb-4 text-gray-900 text-sm">Ressources</h4>
+            <ul class="space-y-2 text-gray-600 text-sm">
+              <li>
+                <a href="#" class="hover:text-gray-900 transition-colors"
+                  >Blog</a
+                >
+              </li>
+              <li>
+                <a href="#" class="hover:text-gray-900 transition-colors"
+                  >Support</a
+                >
+              </li>
+              <li>
+                <a href="#" class="hover:text-gray-900 transition-colors"
+                  >Communauté</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div
+          class="border-t border-gray-200 pt-6 text-center text-gray-600 text-xs"
+        >
+          <p>&copy; 2024 TaskManager. Tous droits réservés.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
+
