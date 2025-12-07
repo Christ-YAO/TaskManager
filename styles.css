@@ -170,6 +170,31 @@ button {
   border-radius: 0.5rem;
 }
 
+/* FAQ Accordion styles */
+.faq-accordion {
+  cursor: pointer;
+}
+
+.faq-button {
+  outline: none;
+}
+
+.faq-button:focus {
+  outline: none;
+}
+
+.faq-icon {
+  transition: transform 0.3s ease;
+}
+
+.faq-content {
+  transition: max-height 0.3s ease-out;
+}
+
+.faq-accordion.active .faq-content {
+  max-height: 500px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .kanban-column {
