@@ -154,21 +154,25 @@
         <div
           class="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 border border-border/50 backdrop-blur-sm overflow-x-auto"
         >
-          <div class="flex space-x-4 min-w-max">
+          <div id="demoKanban" class="flex space-x-4 min-w-max">
             <!-- To Do Column -->
             <div
-              class="bg-muted/30 border border-border rounded-lg p-4 min-w-[260px] max-w-[260px] flex flex-col"
+              class="demo-column bg-muted/30 border border-border rounded-lg p-4 min-w-[260px] max-w-[260px] flex flex-col"
+              data-column="todo"
             >
               <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-foreground">To Do</h3>
                 <span
-                  class="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-md border border-border"
+                  class="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-md border border-border demo-count"
+                  data-column="todo"
                   >2</span
                 >
               </div>
-              <div class="space-y-3 flex-1">
+              <div class="demo-cards space-y-3 flex-1" data-column="todo">
                 <div
-                  class="bg-background border border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all"
+                  class="demo-card bg-background border border-border rounded-lg p-4 cursor-move hover:shadow-md transition-all"
+                  data-card="card1"
+                  draggable="true"
                 >
                   <div class="mb-3">
                     <span
@@ -215,7 +219,9 @@
                   </div>
                 </div>
                 <div
-                  class="bg-background border border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all"
+                  class="demo-card bg-background border border-border rounded-lg p-4 cursor-move hover:shadow-md transition-all"
+                  data-card="card2"
+                  draggable="true"
                 >
                   <div class="mb-3">
                     <span
@@ -249,18 +255,22 @@
 
             <!-- In Progress Column -->
             <div
-              class="bg-muted/30 border border-border rounded-lg p-4 min-w-[260px] max-w-[260px] flex flex-col"
+              class="demo-column bg-muted/30 border border-border rounded-lg p-4 min-w-[260px] max-w-[260px] flex flex-col"
+              data-column="progress"
             >
               <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-foreground">In Progress</h3>
                 <span
-                  class="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-md border border-border"
+                  class="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-md border border-border demo-count"
+                  data-column="progress"
                   >1</span
                 >
               </div>
-              <div class="space-y-3 flex-1">
+              <div class="demo-cards space-y-3 flex-1" data-column="progress">
                 <div
-                  class="bg-background border-2 border-primary rounded-lg p-4 cursor-pointer hover:shadow-md transition-all"
+                  class="demo-card bg-background border-2 border-primary rounded-lg p-4 cursor-move hover:shadow-md transition-all"
+                  data-card="card3"
+                  draggable="true"
                 >
                   <div class="mb-3">
                     <span
@@ -317,18 +327,22 @@
 
             <!-- Done Column -->
             <div
-              class="bg-muted/30 border border-border rounded-lg p-4 min-w-[260px] max-w-[260px] flex flex-col"
+              class="demo-column bg-muted/30 border border-border rounded-lg p-4 min-w-[260px] max-w-[260px] flex flex-col"
+              data-column="done"
             >
               <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-foreground">Done</h3>
                 <span
-                  class="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-md border border-border"
+                  class="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-md border border-border demo-count"
+                  data-column="done"
                   >1</span
                 >
               </div>
-              <div class="space-y-3 flex-1">
+              <div class="demo-cards space-y-3 flex-1" data-column="done">
                 <div
-                  class="bg-background border border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all opacity-75"
+                  class="demo-card bg-background border border-border rounded-lg p-4 cursor-move hover:shadow-md transition-all opacity-75"
+                  data-card="card4"
+                  draggable="true"
                 >
                   <div class="mb-3">
                     <span
@@ -634,5 +648,119 @@
         </div>
       </div>
     </footer>
+
+    <script>
+      // Demo Kanban Drag & Drop
+      (function () {
+        let draggedCard = null;
+        let draggedFromColumn = null;
+
+        // Clear any saved state on page load
+        localStorage.removeItem("demoKanbanState");
+
+        // Initialize
+        function init() {
+          setupDragAndDrop();
+        }
+
+        // Update card counts
+        function updateCounts() {
+          document.querySelectorAll(".demo-cards").forEach((column) => {
+            const columnId = column.dataset.column;
+            const count = column.querySelectorAll(".demo-card").length;
+            const countEl = document.querySelector(
+              `.demo-count[data-column="${columnId}"]`
+            );
+            if (countEl) countEl.textContent = count;
+          });
+        }
+
+        // Setup drag and drop
+        function setupDragAndDrop() {
+          // Setup columns
+          document.querySelectorAll(".demo-column").forEach((column) => {
+            const cardsContainer = column.querySelector(".demo-cards");
+
+            // Allow drop
+            cardsContainer.addEventListener("dragover", function (e) {
+              e.preventDefault();
+              this.classList.add("bg-primary/5");
+            });
+
+            cardsContainer.addEventListener("dragleave", function (e) {
+              this.classList.remove("bg-primary/5");
+            });
+
+            cardsContainer.addEventListener("drop", function (e) {
+              e.preventDefault();
+              this.classList.remove("bg-primary/5");
+
+              if (draggedCard && draggedFromColumn) {
+                const targetColumn = this.dataset.column;
+                const cardId = draggedCard.dataset.card;
+
+                // Update border style based on new position
+                if (cardId === "card3" && targetColumn === "progress") {
+                  draggedCard.className = draggedCard.className.replace(
+                    /border-\d? border-\w+/g,
+                    "border-2 border-primary"
+                  );
+                } else {
+                  draggedCard.className = draggedCard.className.replace(
+                    /border-\d? border-\w+/g,
+                    "border border-border"
+                  );
+                }
+
+                // Update text styles based on column
+                const title = draggedCard.querySelector("h4");
+                const description = draggedCard.querySelector("p");
+
+                if (targetColumn === "done") {
+                  // Add strikethrough and opacity when moved to Done
+                  if (title) title.classList.add("line-through");
+                  if (description) description.classList.add("line-through");
+                  draggedCard.classList.add("opacity-75");
+                } else {
+                  // Remove strikethrough and opacity when moved away from Done
+                  if (title) title.classList.remove("line-through");
+                  if (description) description.classList.remove("line-through");
+                  draggedCard.classList.remove("opacity-75");
+                }
+
+                this.appendChild(draggedCard);
+                draggedCard.classList.remove("opacity-50");
+                updateCounts();
+                draggedCard = null;
+                draggedFromColumn = null;
+              }
+            });
+          });
+
+          // Setup cards
+          document.addEventListener("dragstart", function (e) {
+            if (e.target.classList.contains("demo-card")) {
+              draggedCard = e.target;
+              draggedFromColumn =
+                e.target.closest(".demo-cards").dataset.column;
+              e.target.classList.add("opacity-50");
+            }
+          });
+
+          document.addEventListener("dragend", function (e) {
+            if (e.target.classList.contains("demo-card")) {
+              e.target.classList.remove("opacity-50");
+            }
+          });
+        }
+
+        // Initialize on DOM ready
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", init);
+        } else {
+          init();
+        }
+      })();
+    </script>
   </body>
 </html>

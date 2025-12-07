@@ -144,6 +144,26 @@ button {
     background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 
+/* Demo Kanban styles */
+.demo-card {
+    cursor: grab;
+    user-select: none;
+}
+
+.demo-card:active {
+    cursor: grabbing;
+}
+
+.demo-card.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+
+.demo-cards.drag-over {
+    background-color: hsl(221.2 83.2% 53.3% / 0.05);
+    border-radius: 0.5rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
     .kanban-column {
