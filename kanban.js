@@ -264,6 +264,16 @@ function createColumnElement(column) {
   return columnDiv;
 }
 
+// Helper function to get initials from first two names
+function getInitials(fullName) {
+  if (!fullName) return "";
+  const names = fullName.trim().split(/\s+/);
+  if (names.length === 0) return "";
+  if (names.length === 1) return names[0].charAt(0).toUpperCase();
+  // Get first letter of first name and first letter of second name
+  return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
+}
+
 function createCardHTML(card) {
   const priorityColors = {
     high: "bg-red-500",
@@ -357,8 +367,8 @@ function createCardHTML(card) {
                               (assignee, idx) => `
                             <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-semibold border-2 border-background ${
                               idx > 0 ? "-ml-2" : ""
-                            }">
-                                ${assignee.charAt(0).toUpperCase()}
+                            }" title="${assignee}">
+                                ${getInitials(assignee)}
                             </div>
                         `
                             )
@@ -813,8 +823,8 @@ function showCardDetail(cardId) {
                     ${(card.assignees || [])
                       .map(
                         (assignee) => `
-                        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
-                            ${assignee.charAt(0).toUpperCase()}
+                        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium" title="${assignee}">
+                            ${getInitials(assignee)}
                         </div>
                     `
                       )
