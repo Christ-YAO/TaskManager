@@ -451,6 +451,31 @@
                 </div>
               </div>
             </div>
+            <div class="space-y-2">
+              <label
+                for="cardAssignee"
+                class="block text-sm font-semibold text-black/90 mb-2 flex items-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                Assigné à
+              </label>
+              <div class="relative">
+                <select
+                  id="cardAssignee"
+                  class="flex h-12 w-full rounded-xl border-2 border-black/20 bg-white/30 backdrop-blur-xl px-4 pl-12 py-3 text-sm font-semibold text-black focus-visible:outline-none focus-visible:border-[#22c55e] focus-visible:ring-2 focus-visible:ring-[#22c55e]/30 focus-visible:bg-white/40 focus-visible:backdrop-blur-xl transition-all duration-300 shadow-sm hover:border-black/30 hover:bg-white/35 appearance-none cursor-pointer"
+                >
+                  <option value="">Sélectionner un membre</option>
+                </select>
+                <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black/40 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                <svg class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black/40 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </div>
             <div class="relative pt-4">
               <div class="absolute inset-0 flex items-center">
                 <div class="w-full border-t border-white/30"></div>
@@ -582,6 +607,31 @@
               type="date"
               class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
+          </div>
+          <div>
+            <label
+              for="editCardAssignee"
+              class="block text-sm font-medium text-foreground mb-2 flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              Assigné à
+            </label>
+            <div class="relative">
+              <select
+                id="editCardAssignee"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 pl-10 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none cursor-pointer"
+              >
+                <option value="">Sélectionner un membre</option>
+              </select>
+              <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
           </div>
           <div class="flex space-x-4 pt-4">
             <button

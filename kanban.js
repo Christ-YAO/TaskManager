@@ -461,13 +461,15 @@ function setupModals() {
       const cardDescription = document.getElementById("cardDescription").value;
       const cardPriority = document.getElementById("cardPriority").value;
       const cardDueDate = document.getElementById("cardDueDate").value;
+      const cardAssignee = document.getElementById("cardAssignee").value;
       const columnId = addCardForm.dataset.columnId;
       createCard(
         cardTitle,
         cardDescription,
         columnId,
         cardPriority,
-        cardDueDate
+        cardDueDate,
+        cardAssignee
       );
     });
   }
@@ -484,7 +486,8 @@ function setupModals() {
       ).value;
       const cardPriority = document.getElementById("editCardPriority").value;
       const cardDueDate = document.getElementById("editCardDueDate").value;
-      updateCard(cardId, cardTitle, cardDescription, cardPriority, cardDueDate);
+      const cardAssignee = document.getElementById("editCardAssignee").value;
+      updateCard(cardId, cardTitle, cardDescription, cardPriority, cardDueDate, cardAssignee);
     });
   }
 }
@@ -522,11 +525,96 @@ function showAddCardModal(columnId) {
   document.getElementById("cardDescription").value = "";
   document.getElementById("cardPriority").value = "low";
   document.getElementById("cardDueDate").value = "";
+  
+  // Load assignees
+  loadAssignees();
 }
 
 function hideAddCardModal() {
   document.getElementById("addCardModal").classList.add("hidden");
   document.getElementById("addCardModal").classList.remove("flex");
+  const assigneeSelect = document.getElementById("cardAssignee");
+  if (assigneeSelect) {
+    assigneeSelect.value = "";
+  }
+}
+
+function loadAssignees() {
+  const assigneeSelect = document.getElementById("cardAssignee");
+  if (!assigneeSelect) {
+    console.error("cardAssignee select not found");
+    return;
+  }
+  
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!currentUser) {
+    console.error("No current user found");
+    return;
+  }
+  
+  const boards = JSON.parse(localStorage.getItem("boards") || "[]");
+  const board = boards.find((b) => b.id === currentBoardId);
+  
+  if (!board) {
+    console.error("Board not found");
+    return;
+  }
+  
+  // Get board owner
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+  const boardOwner = users.find((u) => u.id === board.userId);
+  
+  // Get authorized members
+  const authorizedEmails = JSON.parse(localStorage.getItem("authorizedEmails") || "{}");
+  const authorizedMembers = authorizedEmails[board.userId] || [];
+  
+  // Clear existing options except the first one
+  assigneeSelect.innerHTML = '<option value="">Sélectionner un membre</option>';
+  
+  // Add board owner
+  if (boardOwner) {
+    const option = document.createElement("option");
+    option.value = boardOwner.email;
+    const ownerLabel = boardOwner.id === currentUser.id ? `${boardOwner.name} (Moi - Propriétaire)` : `${boardOwner.name} (Propriétaire)`;
+    option.textContent = ownerLabel;
+    if (boardOwner.id === currentUser.id) {
+      option.selected = true;
+    }
+    assigneeSelect.appendChild(option);
+  }
+  
+  // Add authorized members
+  authorizedMembers.forEach((member) => {
+    const memberEmail = typeof member === "string" ? member : member.email;
+    const memberName = typeof member === "string" ? member.split("@")[0] : member.name;
+    const memberUser = users.find((u) => u.email.toLowerCase() === memberEmail.toLowerCase());
+    
+    if (memberUser && memberUser.id !== board.userId) {
+      // Don't add owner again if already added
+      const option = document.createElement("option");
+      option.value = memberUser.email;
+      const memberLabel = memberUser.id === currentUser.id ? `${memberName} (Moi)` : memberName;
+      option.textContent = memberLabel;
+      if (memberUser.id === currentUser.id && !boardOwner) {
+        option.selected = true;
+      }
+      assigneeSelect.appendChild(option);
+    }
+  });
+  
+  // If current user is not in the list, add them
+  const currentUserInList = Array.from(assigneeSelect.options).some(
+    (opt) => opt.value === currentUser.email
+  );
+  if (!currentUserInList) {
+    const option = document.createElement("option");
+    option.value = currentUser.email;
+    option.textContent = `${currentUser.name} (Moi)`;
+    option.selected = true;
+    assigneeSelect.appendChild(option);
+  }
+  
+  console.log(`Loaded ${assigneeSelect.options.length - 1} members for assignment`);
 }
 
 function createCard(
@@ -534,7 +622,8 @@ function createCard(
   description,
   columnId,
   priority = "low",
-  dueDate = null
+  dueDate = null,
+  assigneeEmail = null
 ) {
   const cards = JSON.parse(localStorage.getItem("cards") || "[]");
   const columnCards = cards.filter((c) => c.columnId === columnId);
@@ -542,6 +631,16 @@ function createCard(
     columnCards.length > 0 ? Math.max(...columnCards.map((c) => c.order)) : -1;
 
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+  
+  // Get assignee name
+  let assigneeName = currentUser ? currentUser.name : "";
+  if (assigneeEmail) {
+    const assigneeUser = users.find((u) => u.email.toLowerCase() === assigneeEmail.toLowerCase());
+    if (assigneeUser) {
+      assigneeName = assigneeUser.name;
+    }
+  }
 
   const newCard = {
     id: Date.now().toString(),
@@ -553,7 +652,8 @@ function createCard(
     dueDate: dueDate || null,
     attachments: 0,
     comments: 0,
-    assignees: currentUser ? [currentUser.name] : [],
+    assignees: assigneeName ? [assigneeName] : [],
+    assigneeEmail: assigneeEmail || null,
     order: maxOrder + 1,
     createdAt: new Date().toISOString(),
   };
@@ -719,6 +819,9 @@ function showEditCardModal(cardId) {
   document.getElementById("editCardPriority").value = card.priority || "low";
   document.getElementById("editCardDueDate").value = card.dueDate || "";
 
+  // Load assignees and set current assignee
+  loadAssigneesForEdit(card.assigneeEmail || null);
+
   // Show edit modal
   hideCardDetailModal();
   document.getElementById("editCardModal").classList.remove("hidden");
@@ -730,21 +833,124 @@ function hideEditCardModal() {
   document.getElementById("editCardModal").classList.remove("flex");
 }
 
-function updateCard(cardId, title, description, priority, dueDate) {
+function updateCard(cardId, title, description, priority, dueDate, assigneeEmail = null) {
   const cards = JSON.parse(localStorage.getItem("cards") || "[]");
   const card = cards.find((c) => c.id === cardId);
 
   if (!card) return;
+
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+  
+  // Get assignee name
+  let assigneeName = "";
+  if (assigneeEmail) {
+    const assigneeUser = users.find((u) => u.email.toLowerCase() === assigneeEmail.toLowerCase());
+    if (assigneeUser) {
+      assigneeName = assigneeUser.name;
+    }
+  }
 
   // Update card properties
   card.title = title;
   card.description = description;
   card.priority = priority;
   card.dueDate = dueDate || null;
+  card.assignees = assigneeName ? [assigneeName] : [];
+  card.assigneeEmail = assigneeEmail || null;
 
   localStorage.setItem("cards", JSON.stringify(cards));
   hideEditCardModal();
   loadColumns();
+}
+
+function loadAssigneesForEdit(currentAssigneeEmail = null) {
+  const assigneeSelect = document.getElementById("editCardAssignee");
+  if (!assigneeSelect) {
+    console.error("editCardAssignee select not found");
+    return;
+  }
+  
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!currentUser) {
+    console.error("No current user found");
+    return;
+  }
+  
+  const boards = JSON.parse(localStorage.getItem("boards") || "[]");
+  const board = boards.find((b) => b.id === currentBoardId);
+  
+  if (!board) {
+    console.error("Board not found");
+    return;
+  }
+  
+  // Get board owner
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+  const boardOwner = users.find((u) => u.id === board.userId);
+  
+  // Get authorized members
+  const authorizedEmails = JSON.parse(localStorage.getItem("authorizedEmails") || "{}");
+  const authorizedMembers = authorizedEmails[board.userId] || [];
+  
+  // Clear existing options except the first one
+  assigneeSelect.innerHTML = '<option value="">Sélectionner un membre</option>';
+  
+  // Add board owner
+  if (boardOwner) {
+    const option = document.createElement("option");
+    option.value = boardOwner.email;
+    const ownerLabel = boardOwner.id === currentUser.id ? `${boardOwner.name} (Moi - Propriétaire)` : `${boardOwner.name} (Propriétaire)`;
+    option.textContent = ownerLabel;
+    if (currentAssigneeEmail && boardOwner.email.toLowerCase() === currentAssigneeEmail.toLowerCase()) {
+      option.selected = true;
+    }
+    assigneeSelect.appendChild(option);
+  }
+  
+  // Add authorized members
+  authorizedMembers.forEach((member) => {
+    const memberEmail = typeof member === "string" ? member : member.email;
+    const memberName = typeof member === "string" ? member.split("@")[0] : member.name;
+    const memberUser = users.find((u) => u.email.toLowerCase() === memberEmail.toLowerCase());
+    
+    if (memberUser && memberUser.id !== board.userId) {
+      // Don't add owner again if already added
+      const option = document.createElement("option");
+      option.value = memberUser.email;
+      const memberLabel = memberUser.id === currentUser.id ? `${memberName} (Moi)` : memberName;
+      option.textContent = memberLabel;
+      if (currentAssigneeEmail && memberUser.email.toLowerCase() === currentAssigneeEmail.toLowerCase()) {
+        option.selected = true;
+      }
+      assigneeSelect.appendChild(option);
+    }
+  });
+  
+  // If current user is not in the list, add them
+  const currentUserInList = Array.from(assigneeSelect.options).some(
+    (opt) => opt.value === currentUser.email
+  );
+  if (!currentUserInList) {
+    const option = document.createElement("option");
+    option.value = currentUser.email;
+    option.textContent = `${currentUser.name} (Moi)`;
+    if (currentAssigneeEmail && currentUser.email.toLowerCase() === currentAssigneeEmail.toLowerCase()) {
+      option.selected = true;
+    }
+    assigneeSelect.appendChild(option);
+  }
+  
+  // If no assignee selected and no currentAssigneeEmail, select current user
+  if (!currentAssigneeEmail && assigneeSelect.selectedIndex === 0) {
+    const currentUserOption = Array.from(assigneeSelect.options).find(
+      (opt) => opt.value === currentUser.email
+    );
+    if (currentUserOption) {
+      currentUserOption.selected = true;
+    }
+  }
+  
+  console.log(`Loaded ${assigneeSelect.options.length - 1} members for edit, current assignee: ${currentAssigneeEmail || 'none'}`);
 }
 
 function showInviteModal() {
