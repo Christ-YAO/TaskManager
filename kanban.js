@@ -28,104 +28,89 @@ document.addEventListener("DOMContentLoaded", function () {
   setupModals();
 });
 
-function loadBoard() {
-  const boards = JSON.parse(localStorage.getItem("boards") || "[]");
-  currentBoard = boards.find((b) => b.id === currentBoardId);
-
-  if (!currentBoard) {
-    window.location.href = "dashboard.html";
-    return;
-  }
-
-  // Check if user has access to this board
+async function loadBoard() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-
   if (!currentUser) {
     window.location.href = "login.html";
     return;
   }
 
-  // Admin has access to all boards
-  if (currentUser.role === 'admin') {
-    // Admin can access any board
-  } else if (currentBoard.userId === currentUser.id) {
-    // User owns this board, allow access
-  } else {
-    // Check if user is authorized to access this specific board (new structure)
-    const boardAccess = JSON.parse(localStorage.getItem("boardAccess") || "{}");
-    const boardMembers = boardAccess[currentBoardId] || [];
+  if (!currentBoardId) {
+    window.location.href = "dashboard.html";
+    return;
+  }
 
-    const hasAccess = boardMembers.some((member) => {
-      const memberEmail = typeof member === "string" ? member : member.email;
-      return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
-    });
+  try {
+    // Récupérer le tableau via l'API (l'API vérifie déjà les permissions)
+    console.log("Loading board with ID:", currentBoardId, "for user:", currentUser.id);
+    currentBoard = await BoardsAPI.getOne(currentBoardId, currentUser.id);
+    console.log("Board loaded successfully:", currentBoard);
 
-    if (!hasAccess) {
-      // User not authorized, redirect to own dashboard
-      alert("Vous n'avez pas accès à ce tableau");
+    if (!currentBoard) {
+      console.error("Board is null or undefined");
+      alert("Tableau introuvable");
       window.location.href = "dashboard.html";
       return;
     }
-  }
 
-  // Initialize createdBy for cards without it (legacy cards)
-  const cards = JSON.parse(localStorage.getItem("cards") || "[]");
-  let cardsUpdated = false;
-  const updatedCards = cards.map(card => {
-    if (!card.createdBy && card.boardId === currentBoardId) {
-      cardsUpdated = true;
-      return { ...card, createdBy: currentBoard.userId };
+    // Update UI immediately
+    const boardTitleEl = document.getElementById("boardTitle");
+    if (boardTitleEl) {
+      boardTitleEl.textContent = currentBoard.name;
+      console.log("Board title updated to:", currentBoard.name);
+    } else {
+      console.error("boardTitle element not found, retrying...");
+      setTimeout(() => {
+        const retryEl = document.getElementById("boardTitle");
+        if (retryEl) {
+          retryEl.textContent = currentBoard.name;
+          console.log("Board title updated on retry");
+        }
+      }, 200);
     }
-    return card;
-  });
-  if (cardsUpdated) {
-    localStorage.setItem("cards", JSON.stringify(updatedCards));
-    console.log("Initialized createdBy for legacy cards");
-  }
 
-  // Update UI immediately
-  const boardTitleEl = document.getElementById("boardTitle");
-  if (boardTitleEl) {
-    boardTitleEl.textContent = currentBoard.name;
-    console.log("Board title updated to:", currentBoard.name);
-  } else {
-    console.error("boardTitle element not found, retrying...");
-    setTimeout(() => {
-      const retryEl = document.getElementById("boardTitle");
-      if (retryEl) {
-        retryEl.textContent = currentBoard.name;
-        console.log("Board title updated on retry");
+    // Update user info
+    if (currentUser && currentUser.name) {
+      const userNameEl = document.getElementById("userName");
+      const userInitialEl = document.getElementById("userInitial");
+      const userInitialHeaderEl = document.getElementById("userInitialHeader");
+      if (userNameEl) userNameEl.textContent = currentUser.name;
+      if (userInitialEl)
+        userInitialEl.textContent = currentUser.name.charAt(0).toUpperCase();
+      if (userInitialHeaderEl)
+        userInitialHeaderEl.textContent = currentUser.name
+          .charAt(0)
+          .toUpperCase();
+      
+      // Show add collaborator button for admin or board owner
+      const addCollaboratorBtn = document.getElementById("addCollaboratorBtn");
+      const isAdmin = currentUser.role === "admin";
+      const isOwner = currentBoard.userId == currentUser.id;
+      if (addCollaboratorBtn && (isAdmin || isOwner)) {
+        addCollaboratorBtn.classList.remove("hidden");
       }
-    }, 200);
-  }
-
-  // Update user info
-  if (currentUser && currentUser.name) {
-    const userNameEl = document.getElementById("userName");
-    const userInitialEl = document.getElementById("userInitial");
-    const userInitialHeaderEl = document.getElementById("userInitialHeader");
-    if (userNameEl) userNameEl.textContent = currentUser.name;
-    if (userInitialEl)
-      userInitialEl.textContent = currentUser.name.charAt(0).toUpperCase();
-    if (userInitialHeaderEl)
-      userInitialHeaderEl.textContent = currentUser.name
-        .charAt(0)
-        .toUpperCase();
-    
-    // Show add collaborator button for admin or board owner
-    const addCollaboratorBtn = document.getElementById("addCollaboratorBtn");
-    const isAdmin = currentUser.role === "admin";
-    const isOwner = currentBoard.userId === currentUser.id;
-    if (addCollaboratorBtn && (isAdmin || isOwner)) {
-      addCollaboratorBtn.classList.remove("hidden");
     }
-  }
 
-  // Load columns - ensure DOM is ready
-  setTimeout(() => {
-    console.log("Loading columns for board:", currentBoardId);
-    loadColumns();
-  }, 150);
+    // Load columns - ensure DOM is ready
+    setTimeout(() => {
+      console.log("Loading columns for board:", currentBoardId);
+      loadColumns();
+    }, 150);
+  } catch (error) {
+    console.error("Erreur lors du chargement du tableau:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    // Ne pas rediriger automatiquement, laisser l'utilisateur voir l'erreur dans la console
+    // Si c'est une erreur d'accès, l'API devrait retourner un message clair
+    if (error.message && error.message.includes("Accès non autorisé")) {
+      alert("Vous n'avez pas accès à ce tableau");
+    } else if (error.message && error.message.includes("introuvable")) {
+      alert("Tableau introuvable");
+    } else {
+      alert("Erreur lors du chargement du tableau: " + error.message);
+    }
+    window.location.href = "dashboard.html";
+  }
 }
 
 function loadColumns() {
