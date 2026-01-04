@@ -1,5 +1,21 @@
 // Authentication logic
 document.addEventListener('DOMContentLoaded', function() {
+    // Create admin account if it doesn't exist
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const adminExists = users.some(u => u.role === 'admin');
+    
+    if (!adminExists) {
+        const adminUser = {
+            id: 'admin-' + Date.now().toString(),
+            name: 'Administrateur',
+            email: 'admin@taskmanager.com',
+            password: 'admin123',
+            role: 'admin'
+        };
+        users.push(adminUser);
+        localStorage.setItem('users', JSON.stringify(users));
+    }
+    
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const showRegister = document.getElementById('showRegister');
@@ -89,7 +105,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 id: Date.now().toString(),
                 name: name,
                 email: email,
-                password: password
+                password: password,
+                role: 'user' // Default role
             };
 
             users.push(newUser);

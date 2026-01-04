@@ -53,6 +53,35 @@ TaskManager/
 5. Ajoutez des colonnes et des cartes dans votre tableau Kanban
 6. Déplacez les cartes entre les colonnes par drag & drop
 
+## 👑 Compte Administrateur
+
+### Compte admin par défaut
+
+Un compte administrateur est **créé automatiquement** lors du premier chargement de la page de connexion. Vous pouvez vous connecter directement avec :
+
+- **Email** : `admin@taskmanager.com`
+- **Mot de passe** : `admin123`
+
+⚠️ **Important** : Changez le mot de passe après la première connexion pour des raisons de sécurité.
+
+> Note : Le compte admin est créé automatiquement s'il n'existe pas déjà. Vous n'avez aucune action à effectuer.
+
+### Fonctionnalités Admin
+
+Le compte administrateur dispose des privilèges suivants :
+
+- **Voir tous les tableaux** : L'admin peut voir tous les tableaux de tous les utilisateurs
+- **Ajouter des collaborateurs** : L'admin peut ajouter des collaborateurs à n'importe quel tableau
+  - Depuis le dashboard : Menu contextuel sur chaque tableau → "Ajouter collaborateur"
+  - Depuis le kanban : Bouton "Ajouter collaborateur" dans le header
+
+### Identifiants par défaut
+
+- **Email** : `admin@taskmanager.com`
+- **Mot de passe** : `admin123`
+
+⚠️ **Important** : Changez le mot de passe après la première connexion pour des raisons de sécurité.
+
 ## 💾 Stockage des données
 
 Toutes les données sont stockées localement dans le navigateur via `localStorage` :
@@ -61,14 +90,17 @@ Toutes les données sont stockées localement dans le navigateur via `localStora
 - Colonnes
 - Cartes
 
-## 🎯 Fonctionnalités à venir
+## 🎯 Fonctionnalités
 
-- Équipes et collaboration
-- Invitations par email
-- Labels et étiquettes
-- Dates d'échéance
-- Pièces jointes
-- Recherche et filtres
+- ✅ **Système de rôles** : Utilisateurs et administrateurs
+- ✅ **Collaboration** : Partage de tableaux avec collaborateurs
+- ✅ **Gestion admin** : Les admins peuvent voir tous les tableaux et ajouter des collaborateurs
+- 🔄 **À venir** :
+  - Invitations par email
+  - Labels et étiquettes
+  - Dates d'échéance
+  - Pièces jointes
+  - Recherche et filtres
 
 ## 📝 Notes
 

@@ -45,8 +45,10 @@ function loadBoard() {
     return;
   }
 
-  // User always has access to their own boards
-  if (currentBoard.userId === currentUser.id) {
+  // Admin has access to all boards
+  if (currentUser.role === 'admin') {
+    // Admin can access any board
+  } else if (currentBoard.userId === currentUser.id) {
     // User owns this board, allow access
   } else {
     // Check if user is authorized to access this board
@@ -112,6 +114,14 @@ function loadBoard() {
       userInitialHeaderEl.textContent = currentUser.name
         .charAt(0)
         .toUpperCase();
+    
+    // Show add collaborator button for admin or board owner
+    const addCollaboratorBtn = document.getElementById("addCollaboratorBtn");
+    const isAdmin = currentUser.role === "admin";
+    const isOwner = currentBoard.userId === currentUser.id;
+    if (addCollaboratorBtn && (isAdmin || isOwner)) {
+      addCollaboratorBtn.classList.remove("hidden");
+    }
   }
 
   // Load columns - ensure DOM is ready
@@ -1069,7 +1079,77 @@ function loadAssigneesForEdit(currentAssigneeEmail = null) {
 }
 
 function showInviteModal() {
-  alert("Fonctionnalité d'invitation à venir !");
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  const boards = JSON.parse(localStorage.getItem("boards") || "[]");
+  const board = boards.find((b) => b.id === currentBoardId);
+  
+  if (!board) {
+    alert("Tableau introuvable");
+    return;
+  }
+  
+  // Check if user is admin or board owner
+  const isAdmin = currentUser && currentUser.role === "admin";
+  const isOwner = board.userId === currentUser.id;
+  
+  if (!isAdmin && !isOwner) {
+    alert("Vous n'êtes pas autorisé à ajouter des collaborateurs à ce tableau");
+    return;
+  }
+  
+  // Prompt for collaborator details
+  const name = prompt("Nom du collaborateur :");
+  if (!name || name.trim() === "") {
+    return;
+  }
+  
+  const email = prompt("Email du collaborateur :");
+  if (!email || email.trim() === "") {
+    return;
+  }
+  
+  // Validate email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    alert("Veuillez entrer une adresse email valide");
+    return;
+  }
+  
+  // Don't allow adding own email
+  if (email.toLowerCase() === currentUser.email.toLowerCase()) {
+    alert("Vous ne pouvez pas vous ajouter vous-même");
+    return;
+  }
+  
+  // Add to board owner's authorized list
+  const authorizedEmails = JSON.parse(localStorage.getItem("authorizedEmails") || "{}");
+  const boardOwnerId = board.userId;
+  
+  if (!authorizedEmails[boardOwnerId]) {
+    authorizedEmails[boardOwnerId] = [];
+  }
+  
+  // Check if email already exists
+  const existingMember = authorizedEmails[boardOwnerId].find((m) => {
+    const memberEmail = typeof m === "string" ? m : m.email;
+    return memberEmail.toLowerCase() === email.toLowerCase();
+  });
+  
+  if (existingMember) {
+    alert("Cet email est déjà autorisé pour ce tableau");
+    return;
+  }
+  
+  // Add member
+  authorizedEmails[boardOwnerId].push({
+    name: name.trim(),
+    email: email.toLowerCase(),
+    addedBy: currentUser.id,
+  });
+  
+  localStorage.setItem("authorizedEmails", JSON.stringify(authorizedEmails));
+  
+  alert(`Collaborateur ${name} ajouté avec succès au tableau "${board.name}"`);
 }
 
 function showMenuModal() {
