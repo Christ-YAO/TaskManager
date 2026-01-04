@@ -8,7 +8,10 @@ API REST pour l'application TaskManager (Authentification et Contact)
 
 1. Ouvrez **phpMyAdmin** dans XAMPP (http://localhost/phpmyadmin)
 2. Importez le fichier `init_database.sql` qui crée toutes les tables nécessaires
-   - OU exécutez individuellement `create_users_table.sql` et `create_contacts_table.sql`
+   - OU exécutez individuellement les fichiers SQL dans cet ordre :
+     1. `create_users_table.sql` (ou inclus dans init_database.sql)
+     2. `create_contacts_table.sql` (ou inclus dans init_database.sql)
+     3. `create_tables.sql` (boards, columns, cards, board_access - ou inclus dans init_database.sql)
 
 ### 2. Créer le compte admin
 
