@@ -115,3 +115,9 @@ const BoardAccessAPI = {
     delete: async (data) => apiCall('board_access.php', 'DELETE', data),
 };
 
+// Fonctions API pour users
+const UsersAPI = {
+    getOne: async (userId) => apiCall(`users.php?id=${userId}`),
+    getAll: async () => apiCall('users.php'),
+};
+

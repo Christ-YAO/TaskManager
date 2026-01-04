@@ -127,12 +127,17 @@ if ($method === 'GET') {
 
 // POST - Créer un tableau
 if ($method === 'POST') {
+    // Vérifier que les données sont bien reçues
+    if (!$data || !is_array($data)) {
+        sendResponse(false, 'Données invalides. Format JSON requis. Données reçues: ' . json_encode($input));
+    }
+    
     $userId = $data['user_id'] ?? null;
     $name = trim($data['name'] ?? '');
     $color = $data['color'] ?? 'blue';
     
     if (!$userId) {
-        sendResponse(false, 'user_id requis.');
+        sendResponse(false, 'user_id requis. Données reçues: ' . json_encode($data));
     }
     
     if (empty($name)) {
@@ -145,18 +150,34 @@ if ($method === 'POST') {
     }
     
     try {
+        // Vérifier que l'utilisateur existe
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE id = :user_id");
+        $stmt->execute([':user_id' => $userId]);
+        $user = $stmt->fetch();
+        if (!$user) {
+            sendResponse(false, 'Utilisateur introuvable (ID: ' . $userId . ').');
+        }
+        
         $stmt = $pdo->prepare("
             INSERT INTO boards (name, color, user_id, created_at) 
             VALUES (:name, :color, :user_id, NOW())
         ");
         
-        $stmt->execute([
+        $result = $stmt->execute([
             ':name' => $name,
             ':color' => $color,
             ':user_id' => $userId
         ]);
         
+        if (!$result) {
+            sendResponse(false, 'Erreur lors de l\'insertion du tableau.');
+        }
+        
         $boardId = $pdo->lastInsertId();
+        
+        if (!$boardId) {
+            sendResponse(false, 'Erreur: Aucun ID retourné après insertion.');
+        }
         
         // Créer les colonnes par défaut
         $defaultColumns = [
@@ -177,18 +198,23 @@ if ($method === 'POST') {
         
         // Récupérer le tableau créé
         $stmt = $pdo->prepare("
-            SELECT b.*, 0 as card_count
+            SELECT b.*, 
+                   (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count
             FROM boards b
             WHERE b.id = :id
         ");
         $stmt->execute([':id' => $boardId]);
         $board = $stmt->fetch();
         
+        if (!$board) {
+            sendResponse(false, 'Erreur: Tableau créé mais impossible à récupérer (ID: ' . $boardId . ').');
+        }
+        
         sendResponse(true, 'Tableau créé avec succès.', $board);
         
     } catch (PDOException $e) {
-        error_log("Erreur: " . $e->getMessage());
-        sendResponse(false, 'Erreur lors de la création.');
+        error_log("Erreur lors de la création du tableau: " . $e->getMessage());
+        sendResponse(false, 'Erreur lors de la création: ' . $e->getMessage());
     }
 }
 
