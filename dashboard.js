@@ -64,6 +64,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load authorized emails for all users (members can add other members)
     loadAuthorizedEmails();
     
+    // Load boards for the select dropdown
+    loadBoardsForSelect();
+    
     // Handle add member form
     const addEmailForm = document.getElementById('addEmailForm');
     if (addEmailForm) {
@@ -71,8 +74,11 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const name = document.getElementById('memberName').value.trim();
             const email = document.getElementById('newEmail').value.trim();
-            if (name && email) {
-                addAuthorizedEmail(email, name);
+            const boardId = document.getElementById('boardSelect').value;
+            if (name && email && boardId) {
+                addAuthorizedEmail(email, name, boardId);
+            } else {
+                alert('Veuillez remplir tous les champs, y compris le tableau');
             }
         });
     }
@@ -151,24 +157,31 @@ function loadStats() {
         return;
     }
     
-    // Get all user IDs whose boards this user can access
-    const authorizedEmails = JSON.parse(localStorage.getItem('authorizedEmails') || '{}');
-    const accessibleUserIds = [currentUser.id]; // Start with own boards
+    // Get boards this user has access to (new structure: by boardId)
+    const boardAccess = JSON.parse(localStorage.getItem('boardAccess') || '{}');
+    const accessibleBoardIds = [];
     
-    // Find all owners who have authorized this user
-    Object.keys(authorizedEmails).forEach(ownerId => {
-        const authorizedList = authorizedEmails[ownerId] || [];
-        const isAuthorized = authorizedList.some(member => {
-            const memberEmail = typeof member === 'string' ? member : member.email;
-            return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
-        });
-        if (isAuthorized) {
-            accessibleUserIds.push(ownerId);
+    // Start with own boards
+    boards.forEach(board => {
+        if (board.userId === currentUser.id) {
+            accessibleBoardIds.push(board.id);
         }
     });
     
-    // Filter boards and cards for all accessible users
-    const userBoards = boards.filter(b => accessibleUserIds.includes(b.userId));
+    // Add boards where user is explicitly added as collaborator
+    Object.keys(boardAccess).forEach(boardId => {
+        const members = boardAccess[boardId] || [];
+        const hasAccess = members.some(member => {
+            const memberEmail = typeof member === 'string' ? member : member.email;
+            return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
+        });
+        if (hasAccess && !accessibleBoardIds.includes(boardId)) {
+            accessibleBoardIds.push(boardId);
+        }
+    });
+    
+    // Filter boards and cards to only those accessible
+    const userBoards = boards.filter(b => accessibleBoardIds.includes(b.id));
     const userCards = cards.filter(c => userBoards.some(b => b.id === c.boardId));
     
     displayStats(userBoards, userCards);
@@ -243,24 +256,31 @@ function loadBoards() {
         return;
     }
     
-    // Get all user IDs whose boards this user can access
-    const authorizedEmails = JSON.parse(localStorage.getItem('authorizedEmails') || '{}');
-    const accessibleUserIds = [currentUser.id]; // Start with own boards
+    // Get boards this user has access to (new structure: by boardId)
+    const boardAccess = JSON.parse(localStorage.getItem('boardAccess') || '{}');
+    const accessibleBoardIds = [];
     
-    // Find all owners who have authorized this user
-    Object.keys(authorizedEmails).forEach(ownerId => {
-        const authorizedList = authorizedEmails[ownerId] || [];
-        const isAuthorized = authorizedList.some(member => {
-            const memberEmail = typeof member === 'string' ? member : member.email;
-            return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
-        });
-        if (isAuthorized) {
-            accessibleUserIds.push(ownerId);
+    // Start with own boards
+    boards.forEach(board => {
+        if (board.userId === currentUser.id) {
+            accessibleBoardIds.push(board.id);
         }
     });
     
-    // Filter boards for all accessible users
-    const userBoards = boards.filter(b => accessibleUserIds.includes(b.userId));
+    // Add boards where user is explicitly added as collaborator
+    Object.keys(boardAccess).forEach(boardId => {
+        const members = boardAccess[boardId] || [];
+        const hasAccess = members.some(member => {
+            const memberEmail = typeof member === 'string' ? member : member.email;
+            return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
+        });
+        if (hasAccess && !accessibleBoardIds.includes(boardId)) {
+            accessibleBoardIds.push(boardId);
+        }
+    });
+    
+    // Filter boards to only those accessible
+    const userBoards = boards.filter(b => accessibleBoardIds.includes(b.id));
     
     displayBoards(userBoards);
 }
@@ -700,51 +720,63 @@ function loadAuthorizedEmails() {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser) return;
     
-    // Get authorized members added by current user
-    // Members can add other members, so we show members they added
-    const authorizedEmails = JSON.parse(localStorage.getItem('authorizedEmails') || '{}');
-    const userMembers = authorizedEmails[currentUser.id] || [];
+    // Get all boards where current user is owner or admin
+    const boards = JSON.parse(localStorage.getItem('boards') || '[]');
+    const boardAccess = JSON.parse(localStorage.getItem('boardAccess') || '{}');
     
-    // Filter to show only members added by current user
-    const membersAddedByCurrentUser = userMembers.filter(member => {
-        if (typeof member === 'string') return false; // Legacy format, skip
-        return member.addedBy === currentUser.id;
-    });
+    // Collect all members from boards owned by current user (or all boards if admin)
+    const allMembers = [];
+    const boardsToCheck = currentUser.role === 'admin' 
+        ? boards 
+        : boards.filter(b => b.userId === currentUser.id);
     
-    // Handle migration from old format (array of strings) to new format (array of objects)
-    const members = membersAddedByCurrentUser.map(member => {
-        if (typeof member === 'string') {
-            return { name: member.split('@')[0], email: member };
-        }
-        return member;
+    boardsToCheck.forEach(board => {
+        const members = boardAccess[board.id] || [];
+        members.forEach(member => {
+            const memberEmail = typeof member === 'string' ? member : member.email;
+            const memberName = typeof member === 'string' ? member.split('@')[0] : member.name;
+            
+            // Check if already added (same email, same board)
+            const exists = allMembers.some(m => 
+                m.email === memberEmail && m.boardId === board.id
+            );
+            
+            if (!exists) {
+                allMembers.push({
+                    name: memberName,
+                    email: memberEmail,
+                    boardId: board.id,
+                    boardName: board.name,
+                    addedBy: typeof member === 'object' ? member.addedBy : null
+                });
+            }
+        });
     });
     
     // Display in main section
     const listContainer = document.getElementById('authorizedEmailsList');
     if (listContainer) {
-        if (members.length === 0) {
+        if (allMembers.length === 0) {
             listContainer.innerHTML = `
                 <div class="text-center py-4 text-black/50 text-sm">
                     <p>Aucun membre autorisé pour le moment</p>
                 </div>
             `;
         } else {
-            listContainer.innerHTML = members.map(member => {
-                const email = typeof member === 'string' ? member : member.email;
-                const name = typeof member === 'string' ? email.split('@')[0] : member.name;
-                const displayName = name || email;
+            listContainer.innerHTML = allMembers.map(member => {
                 return `
                 <div class="flex items-center justify-between p-3 bg-white/40 backdrop-blur-sm rounded-xl border border-white/50">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#22c55e] to-[#059669] flex items-center justify-center text-white text-xs font-bold">
-                            ${displayName.charAt(0).toUpperCase()}
+                            ${member.name.charAt(0).toUpperCase()}
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-sm font-semibold text-black">${displayName}</span>
-                            <span class="text-xs text-black/60">${email}</span>
+                            <span class="text-sm font-semibold text-black">${member.name}</span>
+                            <span class="text-xs text-black/60">${member.email}</span>
+                            <span class="text-xs text-black/40 mt-1">Tableau: ${member.boardName}</span>
                         </div>
                     </div>
-                    <button onclick="removeAuthorizedEmail('${email}')" class="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center text-red-600 transition-colors">
+                    <button onclick="removeAuthorizedEmail('${member.email}', '${member.boardId}')" class="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center text-red-600 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -758,29 +790,27 @@ function loadAuthorizedEmails() {
     // Display in modal
     const modalListContainer = document.getElementById('authorizedEmailsModalList');
     if (modalListContainer) {
-        if (members.length === 0) {
+        if (allMembers.length === 0) {
             modalListContainer.innerHTML = `
                 <div class="text-center py-4 text-black/50 text-sm">
                     <p>Aucun membre autorisé</p>
                 </div>
             `;
         } else {
-            modalListContainer.innerHTML = members.map(member => {
-                const email = typeof member === 'string' ? member : member.email;
-                const name = typeof member === 'string' ? email.split('@')[0] : member.name;
-                const displayName = name || email;
+            modalListContainer.innerHTML = allMembers.map(member => {
                 return `
                 <div class="flex items-center justify-between p-3 bg-white/40 backdrop-blur-sm rounded-xl border border-white/50">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#22c55e] to-[#059669] flex items-center justify-center text-white text-xs font-bold">
-                            ${displayName.charAt(0).toUpperCase()}
+                            ${member.name.charAt(0).toUpperCase()}
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-sm font-semibold text-black">${displayName}</span>
-                            <span class="text-xs text-black/60">${email}</span>
+                            <span class="text-sm font-semibold text-black">${member.name}</span>
+                            <span class="text-xs text-black/60">${member.email}</span>
+                            <span class="text-xs text-black/40 mt-1">Tableau: ${member.boardName}</span>
                         </div>
                     </div>
-                    <button onclick="removeAuthorizedEmail('${email}')" class="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center text-red-600 transition-colors">
+                    <button onclick="removeAuthorizedEmail('${member.email}', '${member.boardId}')" class="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center text-red-600 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -792,7 +822,9 @@ function loadAuthorizedEmails() {
     }
 }
 
-function addAuthorizedEmail(email, name, boardId = null) {
+// New structure: boardAccess stores access by boardId
+// Format: { boardId: [{ name, email, addedBy }] }
+function addAuthorizedEmail(email, name, boardId) {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser) return;
     
@@ -809,94 +841,114 @@ function addAuthorizedEmail(email, name, boardId = null) {
         return;
     }
     
+    // Validate boardId
+    if (!boardId) {
+        alert('Veuillez sélectionner un tableau');
+        return;
+    }
+    
     // Don't allow adding own email
     if (email.toLowerCase() === currentUser.email.toLowerCase()) {
         alert('Vous ne pouvez pas vous ajouter vous-même');
         return;
     }
     
-    const authorizedEmails = JSON.parse(localStorage.getItem('authorizedEmails') || '{}');
     const boards = JSON.parse(localStorage.getItem('boards') || '[]');
+    const board = boards.find(b => b.id === boardId);
     
-    // Admin can add collaborators to any board
-    let targetUserId = currentUser.id;
-    
-    if (currentUser.role === 'admin' && boardId) {
-        // Admin adding to a specific board
-        const board = boards.find(b => b.id === boardId);
-        if (board) {
-            targetUserId = board.userId;
-        }
-    } else if (currentUser.role === 'admin' && !boardId) {
-        // Admin adding from dashboard - need to select which board owner
-        // For now, we'll use the first board or show a selection
-        // This will be handled by the UI showing board selection for admin
-        alert('En tant qu\'admin, veuillez sélectionner un tableau spécifique pour ajouter un collaborateur.');
+    if (!board) {
+        alert('Tableau introuvable');
         return;
-    } else {
-        // Regular user logic
-        // Check if viewing a shared dashboard
-        if (window.sharedDashboardOwnerId) {
-            targetUserId = window.sharedDashboardOwnerId;
-        } else {
-            // Check if current user is an owner
-            const isOwner = boards.some(b => b.userId === currentUser.id);
-            
-            if (!isOwner) {
-                // User is a member, find which board owner they have access to
-                // Get the first board owner who has authorized this user
-                for (const ownerId in authorizedEmails) {
-                    const authorizedList = authorizedEmails[ownerId] || [];
-                    const isAuthorized = authorizedList.some(member => {
-                        const memberEmail = typeof member === 'string' ? member : member.email;
-                        return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
-                    });
-                    if (isAuthorized) {
-                        targetUserId = ownerId;
-                        break;
-                    }
-                }
-            }
-        }
     }
     
-    if (!authorizedEmails[targetUserId]) {
-        authorizedEmails[targetUserId] = [];
+    // Check permissions: admin can add to any board, owner can add to their own boards
+    const isAdmin = currentUser.role === 'admin';
+    const isOwner = board.userId === currentUser.id;
+    
+    if (!isAdmin && !isOwner) {
+        alert('Vous n\'êtes pas autorisé à ajouter des collaborateurs à ce tableau');
+        return;
     }
     
-    // Check if email already exists
-    const existingMember = authorizedEmails[targetUserId].find(m => {
+    // Get board access structure (new format: by boardId)
+    let boardAccess = JSON.parse(localStorage.getItem('boardAccess') || '{}');
+    
+    if (!boardAccess[boardId]) {
+        boardAccess[boardId] = [];
+    }
+    
+    // Check if email already exists for this board
+    const existingMember = boardAccess[boardId].find(m => {
         const memberEmail = typeof m === 'string' ? m : m.email;
         return memberEmail.toLowerCase() === email.toLowerCase();
     });
+    
     if (existingMember) {
-        alert('Cet email est déjà autorisé');
+        alert('Cet email est déjà autorisé pour ce tableau');
         return;
     }
     
-    // Add member with name, email, and who added them
-    authorizedEmails[targetUserId].push({
+    // Add member to this specific board
+    boardAccess[boardId].push({
         name: name.trim(),
         email: email.toLowerCase(),
         addedBy: currentUser.id
     });
-    localStorage.setItem('authorizedEmails', JSON.stringify(authorizedEmails));
+    
+    localStorage.setItem('boardAccess', JSON.stringify(boardAccess));
     
     loadAuthorizedEmails();
     
     // Clear form
     document.getElementById('memberName').value = '';
     document.getElementById('newEmail').value = '';
+    document.getElementById('boardSelect').value = '';
+    
+    alert(`Collaborateur ${name} ajouté avec succès au tableau "${board.name}"`);
 }
 
-function removeAuthorizedEmail(email) {
+// Load boards into the select dropdown
+function loadBoardsForSelect() {
+    const boardSelect = document.getElementById('boardSelect');
+    if (!boardSelect) return;
+    
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser) return;
     
-    const authorizedEmails = JSON.parse(localStorage.getItem('authorizedEmails') || '{}');
-    const members = authorizedEmails[currentUser.id] || [];
+    const boards = JSON.parse(localStorage.getItem('boards') || '[]');
+    
+    // Clear existing options except the first one
+    boardSelect.innerHTML = '<option value="">Sélectionner un tableau</option>';
+    
+    // Admin can see all boards, regular users see only their own
+    const userBoards = currentUser.role === 'admin' 
+        ? boards 
+        : boards.filter(b => b.userId === currentUser.id);
+    
+    userBoards.forEach(board => {
+        const option = document.createElement('option');
+        option.value = board.id;
+        option.textContent = board.name;
+        boardSelect.appendChild(option);
+    });
+}
+
+function removeAuthorizedEmail(email, boardId) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) return;
+    
+    const boardAccess = JSON.parse(localStorage.getItem('boardAccess') || '{}');
+    const boards = JSON.parse(localStorage.getItem('boards') || '[]');
+    
+    if (!boardId || !boardAccess[boardId]) {
+        return;
+    }
+    
+    const board = boards.find(b => b.id === boardId);
+    const boardName = board ? board.name : 'ce tableau';
     
     // Find member to get name for confirmation
+    const members = boardAccess[boardId] || [];
     const member = members.find(m => {
         const memberEmail = typeof m === 'string' ? m : m.email;
         return memberEmail.toLowerCase() === email.toLowerCase();
@@ -904,17 +956,17 @@ function removeAuthorizedEmail(email) {
     
     const memberName = member && typeof member === 'object' ? member.name : email.split('@')[0];
     
-    if (!confirm(`Êtes-vous sûr de vouloir retirer l'accès à ${memberName} (${email}) ?`)) {
+    if (!confirm(`Êtes-vous sûr de vouloir retirer l'accès de ${memberName} (${email}) au tableau "${boardName}" ?`)) {
         return;
     }
     
-    if (authorizedEmails[currentUser.id]) {
-        authorizedEmails[currentUser.id] = authorizedEmails[currentUser.id].filter(m => {
-            const memberEmail = typeof m === 'string' ? m : m.email;
-            return memberEmail.toLowerCase() !== email.toLowerCase();
-        });
-        localStorage.setItem('authorizedEmails', JSON.stringify(authorizedEmails));
-    }
+    // Remove member from this board
+    boardAccess[boardId] = boardAccess[boardId].filter(m => {
+        const memberEmail = typeof m === 'string' ? m : m.email;
+        return memberEmail.toLowerCase() !== email.toLowerCase();
+    });
+    
+    localStorage.setItem('boardAccess', JSON.stringify(boardAccess));
     
     loadAuthorizedEmails();
 }
@@ -924,6 +976,7 @@ function showAccessModal() {
     if (!modal) return;
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    loadBoardsForSelect(); // Reload boards in case new ones were added
     loadAuthorizedEmails();
 }
 
@@ -945,14 +998,18 @@ function checkUserAccess(userId) {
     // User always has access to their own dashboard
     if (currentUser.id === userId) return true;
     
-    // Check if current user is authorized
-    const authorizedEmails = JSON.parse(localStorage.getItem('authorizedEmails') || '{}');
-    const authorizedList = authorizedEmails[userId] || [];
+    // Check if current user has access to any board owned by this user
+    const boards = JSON.parse(localStorage.getItem('boards') || '[]');
+    const boardAccess = JSON.parse(localStorage.getItem('boardAccess') || '{}');
+    const userBoards = boards.filter(b => b.userId === userId);
     
-    // Handle both old format (array of strings) and new format (array of objects)
-    return authorizedList.some(member => {
-        const memberEmail = typeof member === 'string' ? member : member.email;
-        return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
+    // Check if user has access to any of this user's boards
+    return userBoards.some(board => {
+        const members = boardAccess[board.id] || [];
+        return members.some(member => {
+            const memberEmail = typeof member === 'string' ? member : member.email;
+            return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
+        });
     });
 }
 
@@ -987,48 +1044,8 @@ function addCollaboratorToBoard(boardId) {
         return;
     }
     
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        alert('Veuillez entrer une adresse email valide');
-        return;
-    }
-    
-    // Don't allow adding own email
-    if (email.toLowerCase() === currentUser.email.toLowerCase()) {
-        alert('Vous ne pouvez pas vous ajouter vous-même');
-        return;
-    }
-    
-    // Add to board owner's authorized list
-    const authorizedEmails = JSON.parse(localStorage.getItem('authorizedEmails') || '{}');
-    const boardOwnerId = board.userId;
-    
-    if (!authorizedEmails[boardOwnerId]) {
-        authorizedEmails[boardOwnerId] = [];
-    }
-    
-    // Check if email already exists
-    const existingMember = authorizedEmails[boardOwnerId].find(m => {
-        const memberEmail = typeof m === 'string' ? m : m.email;
-        return memberEmail.toLowerCase() === email.toLowerCase();
-    });
-    
-    if (existingMember) {
-        alert('Cet email est déjà autorisé pour ce tableau');
-        return;
-    }
-    
-    // Add member
-    authorizedEmails[boardOwnerId].push({
-        name: name.trim(),
-        email: email.toLowerCase(),
-        addedBy: currentUser.id
-    });
-    
-    localStorage.setItem('authorizedEmails', JSON.stringify(authorizedEmails));
-    
-    alert(`Collaborateur ${name} ajouté avec succès au tableau "${board.name}"`);
+    // Use the new addAuthorizedEmail function with boardId
+    addAuthorizedEmail(email, name, boardId);
     
     // Close menu
     if (currentBoardMenu) {

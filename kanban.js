@@ -51,14 +51,11 @@ function loadBoard() {
   } else if (currentBoard.userId === currentUser.id) {
     // User owns this board, allow access
   } else {
-    // Check if user is authorized to access this board
-    const authorizedEmails = JSON.parse(
-      localStorage.getItem("authorizedEmails") || "{}"
-    );
-    const authorizedList = authorizedEmails[currentBoard.userId] || [];
+    // Check if user is authorized to access this specific board (new structure)
+    const boardAccess = JSON.parse(localStorage.getItem("boardAccess") || "{}");
+    const boardMembers = boardAccess[currentBoardId] || [];
 
-    // Handle both old format (array of strings) and new format (array of objects)
-    const hasAccess = authorizedList.some((member) => {
+    const hasAccess = boardMembers.some((member) => {
       const memberEmail = typeof member === "string" ? member : member.email;
       return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
     });
@@ -1108,29 +1105,27 @@ function showInviteModal() {
     return;
   }
   
-  // Validate email
+  // Use the addAuthorizedEmail function from dashboard.js (need to make it global or duplicate logic)
+  // For now, we'll duplicate the logic here
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     alert("Veuillez entrer une adresse email valide");
     return;
   }
   
-  // Don't allow adding own email
   if (email.toLowerCase() === currentUser.email.toLowerCase()) {
     alert("Vous ne pouvez pas vous ajouter vous-même");
     return;
   }
   
-  // Add to board owner's authorized list
-  const authorizedEmails = JSON.parse(localStorage.getItem("authorizedEmails") || "{}");
-  const boardOwnerId = board.userId;
+  // Use new boardAccess structure
+  let boardAccess = JSON.parse(localStorage.getItem("boardAccess") || "{}");
   
-  if (!authorizedEmails[boardOwnerId]) {
-    authorizedEmails[boardOwnerId] = [];
+  if (!boardAccess[currentBoardId]) {
+    boardAccess[currentBoardId] = [];
   }
   
-  // Check if email already exists
-  const existingMember = authorizedEmails[boardOwnerId].find((m) => {
+  const existingMember = boardAccess[currentBoardId].find((m) => {
     const memberEmail = typeof m === "string" ? m : m.email;
     return memberEmail.toLowerCase() === email.toLowerCase();
   });
@@ -1140,14 +1135,13 @@ function showInviteModal() {
     return;
   }
   
-  // Add member
-  authorizedEmails[boardOwnerId].push({
+  boardAccess[currentBoardId].push({
     name: name.trim(),
     email: email.toLowerCase(),
     addedBy: currentUser.id,
   });
   
-  localStorage.setItem("authorizedEmails", JSON.stringify(authorizedEmails));
+  localStorage.setItem("boardAccess", JSON.stringify(boardAccess));
   
   alert(`Collaborateur ${name} ajouté avec succès au tableau "${board.name}"`);
 }
