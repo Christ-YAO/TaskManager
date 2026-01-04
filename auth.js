@@ -1,20 +1,7 @@
 // Authentication logic
 document.addEventListener("DOMContentLoaded", function () {
-  // Create admin account if it doesn't exist
-  const users = JSON.parse(localStorage.getItem("users") || "[]");
-  const adminExists = users.some((u) => u.role === "admin");
-
-  if (!adminExists) {
-    const adminUser = {
-      id: "admin-" + Date.now().toString(),
-      name: "Administrateur",
-      email: "admin@taskmanager.com",
-      password: "admin123",
-      role: "admin",
-    };
-    users.push(adminUser);
-    localStorage.setItem("users", JSON.stringify(users));
-  }
+  // L'admin est maintenant créé dans la base de données
+  // Voir api/init_admin.php pour créer le compte admin
 
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
@@ -46,78 +33,122 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Handle login
   if (loginForm) {
-    loginForm.addEventListener("submit", function (e) {
+    loginForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
-      // Get users from localStorage
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
-      const user = users.find(
-        (u) => u.email === email && u.password === password
-      );
+      // Désactiver le bouton de soumission
+      const submitButton = loginForm.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.innerHTML;
+      submitButton.disabled = true;
+      submitButton.innerHTML = "<span>Connexion...</span>";
 
-      if (user) {
-        // Save current user
-        localStorage.setItem("currentUser", JSON.stringify(user));
+      try {
+        const response = await fetch("api/login.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password,
+          }),
+        });
 
-        // Check if user has access to another user's dashboard
-        // If accessing someone else's dashboard, check authorization
-        const urlParams = new URLSearchParams(window.location.search);
-        const ownerId = urlParams.get("ownerId");
+        const result = await response.json();
 
-        if (ownerId && ownerId !== user.id) {
-          // Check if user is authorized
-          const authorizedEmails = JSON.parse(
-            localStorage.getItem("authorizedEmails") || "{}"
-          );
-          const authorizedList = authorizedEmails[ownerId] || [];
+        if (result.success && result.data) {
+          const user = result.data;
+          // Convertir l'ID en string pour compatibilité
+          user.id = user.id.toString();
 
-          if (!authorizedList.includes(user.email.toLowerCase())) {
-            // User not authorized, redirect to own dashboard
-            window.location.href = "dashboard.html";
-            return;
+          // Save current user
+          localStorage.setItem("currentUser", JSON.stringify(user));
+
+          // Check if user has access to another user's dashboard
+          const urlParams = new URLSearchParams(window.location.search);
+          const ownerId = urlParams.get("ownerId");
+
+          if (ownerId && ownerId !== user.id) {
+            // Check if user is authorized
+            const authorizedEmails = JSON.parse(
+              localStorage.getItem("authorizedEmails") || "{}"
+            );
+            const authorizedList = authorizedEmails[ownerId] || [];
+
+            if (!authorizedList.includes(user.email.toLowerCase())) {
+              // User not authorized, redirect to own dashboard
+              window.location.href = "dashboard.html";
+              return;
+            }
           }
-        }
 
-        window.location.href = "dashboard.html";
-      } else {
-        alert("Email ou mot de passe incorrect");
+          window.location.href = "dashboard.html";
+        } else {
+          alert(result.message || "Email ou mot de passe incorrect");
+        }
+      } catch (error) {
+        console.error("Erreur:", error);
+        alert("Une erreur est survenue. Veuillez réessayer plus tard.");
+      } finally {
+        // Réactiver le bouton
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
       }
     });
   }
 
   // Handle registration
   if (registerForm) {
-    registerForm.addEventListener("submit", function (e) {
+    registerForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       const name = document.getElementById("reg-name").value;
       const email = document.getElementById("reg-email").value;
       const password = document.getElementById("reg-password").value;
 
-      // Get users from localStorage
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      // Désactiver le bouton de soumission
+      const submitButton = registerForm.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.innerHTML;
+      submitButton.disabled = true;
+      submitButton.innerHTML = "<span>Inscription...</span>";
 
-      // Check if user already exists
-      if (users.find((u) => u.email === email)) {
-        alert("Cet email est déjà utilisé");
-        return;
+      try {
+        const response = await fetch("api/register.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            password: password,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          const newUser = result.data;
+          // Convertir l'ID en string pour compatibilité
+          newUser.id = newUser.id.toString();
+
+          // Save current user
+          localStorage.setItem("currentUser", JSON.stringify(newUser));
+
+          alert(result.message || "Inscription réussie !");
+          window.location.href = "dashboard.html";
+        } else {
+          alert(result.message || "Erreur lors de l'inscription");
+        }
+      } catch (error) {
+        console.error("Erreur:", error);
+        alert("Une erreur est survenue. Veuillez réessayer plus tard.");
+      } finally {
+        // Réactiver le bouton
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
       }
-
-      // Create new user
-      const newUser = {
-        id: Date.now().toString(),
-        name: name,
-        email: email,
-        password: password,
-        role: "user", // Default role
-      };
-
-      users.push(newUser);
-      localStorage.setItem("users", JSON.stringify(users));
-      localStorage.setItem("currentUser", JSON.stringify(newUser));
-
-      window.location.href = "dashboard.html";
     });
   }
 });
