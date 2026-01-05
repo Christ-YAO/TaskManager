@@ -299,16 +299,23 @@ function createCardHTML(card, columnName = "") {
   const strikeThroughClass = isDone ? "line-through opacity-75" : "";
 
   return `
-        <div class="kanban-card bg-background border border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all ${
+        <div class="kanban-card bg-background border border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all relative ${
           isDone ? "opacity-75" : ""
         }" 
              draggable="true" 
              data-card-id="${card.id}"
              onclick="showCardDetail('${card.id}')">
-            <div class="mb-3">
+            <div class="mb-3 flex items-center justify-between">
                 <span class="inline-block px-2.5 py-1 rounded text-xs font-medium text-white ${
                   priorityColors[priority]
                 }">${priorityLabels[priority]}</span>
+                <div class="card-menu relative">
+                    <button onclick="event.stopPropagation(); showCardMenu('${card.id}', event)" class="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <h4 class="font-semibold text-foreground mb-2 text-sm ${strikeThroughClass}">${
     card.title
@@ -381,11 +388,6 @@ function createCardHTML(card, columnName = "") {
                           }</div>`
                         : ""
                     }
-                    <button onclick="event.stopPropagation();" class="w-6 h-6 rounded-full bg-muted hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground text-xs font-semibold border-2 border-background -ml-2 transition-colors">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                    </button>
                 </div>
             </div>
         </div>
@@ -544,6 +546,7 @@ function createColumn(name) {
 }
 
 let currentColumnIdForCard = null;
+let currentCardMenu = null;
 
 function showAddCardModal(columnId) {
   currentColumnIdForCard = columnId;
@@ -821,60 +824,164 @@ function hideCardDetailModal() {
   document.getElementById("cardDetailModal").classList.remove("flex");
 }
 
-function deleteCard(cardId) {
-  const cards = JSON.parse(localStorage.getItem("cards") || "[]");
-  const card = cards.find((c) => c.id === cardId);
-  
-  if (!card) return;
-  
+async function showCardMenu(cardId, event) {
+  // Close previous menu if open
+  if (currentCardMenu) {
+    currentCardMenu.remove();
+    currentCardMenu = null;
+  }
+
+  event.stopPropagation();
+
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  
-  // Check if current user is the creator
-  if (card.createdBy !== currentUser.id) {
-    alert("Vous n'êtes pas autorisé à supprimer cette carte. Seul le créateur peut la supprimer.");
+  if (!currentUser) {
+    window.location.href = "login.html";
     return;
   }
-  
-  if (!confirm("Êtes-vous sûr de vouloir supprimer cette carte ?")) return;
 
-  const filteredCards = cards.filter((c) => c.id !== cardId);
-  localStorage.setItem("cards", JSON.stringify(filteredCards));
+  try {
+    // Récupérer toutes les cartes du board pour trouver celle-ci
+    const cards = await CardsAPI.getByBoard(currentBoardId);
+    const card = cards.find((c) => c.id == cardId);
 
-  updateBoardCardCount();
-  hideCardDetailModal();
-  loadColumns();
+    if (!card) {
+      console.error("Card not found:", cardId);
+      return;
+    }
+
+    // Vérifier si l'utilisateur est le créateur
+    const isCreator = card.createdBy == currentUser.id;
+
+    const menu = document.createElement("div");
+    menu.className =
+      "absolute right-0 top-full mt-2 w-48 bg-background border border-border rounded-lg shadow-lg z-50 py-1";
+    menu.onclick = (e) => e.stopPropagation();
+    menu.innerHTML = `
+            ${
+              isCreator
+                ? `
+            <button onclick="event.stopPropagation(); showEditCardModal('${cardId}'); return false;" class="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                <span>Modifier</span>
+            </button>
+            <button onclick="event.stopPropagation(); deleteCard('${cardId}'); return false;" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                <span>Supprimer</span>
+            </button>
+            `
+                : ""
+            }
+        `;
+
+    const button = event.target.closest("button");
+    const menuContainer = button.parentElement; // Le div avec class="card-menu relative"
+    if (menuContainer) {
+      menuContainer.appendChild(menu);
+      currentCardMenu = menu;
+    }
+
+    // Close menu when clicking outside
+    setTimeout(() => {
+      document.addEventListener("click", function closeMenu(e) {
+        if (!menu.contains(e.target) && !button.contains(e.target)) {
+          menu.remove();
+          currentCardMenu = null;
+          document.removeEventListener("click", closeMenu);
+        }
+      });
+    }, 0);
+  } catch (error) {
+    console.error("Erreur lors de la récupération de la carte:", error);
+  }
 }
 
-function showEditCardModal(cardId) {
-  const cards = JSON.parse(localStorage.getItem("cards") || "[]");
-  const card = cards.find((c) => c.id === cardId);
-
-  if (!card) return;
-
+async function deleteCard(cardId) {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  
-  // Check if current user is the creator
-  if (card.createdBy !== currentUser.id) {
-    alert("Vous n'êtes pas autorisé à modifier cette carte. Seul le créateur peut la modifier.");
+  if (!currentUser) {
+    window.location.href = "login.html";
     return;
   }
 
-  // Store current card ID for editing
-  document.getElementById("editCardForm").dataset.cardId = cardId;
+  if (!confirm("Êtes-vous sûr de vouloir supprimer cette carte ?")) return;
 
-  // Fill form with card data
-  document.getElementById("editCardTitle").value = card.title;
-  document.getElementById("editCardDescription").value = card.description || "";
-  document.getElementById("editCardPriority").value = card.priority || "low";
-  document.getElementById("editCardDueDate").value = card.dueDate || "";
+  try {
+    // Fermer le menu si ouvert
+    if (currentCardMenu) {
+      currentCardMenu.remove();
+      currentCardMenu = null;
+    }
 
-  // Load assignees and set current assignee
-  loadAssigneesForEdit(card.assigneeEmail || null);
+    await CardsAPI.delete({ id: cardId });
+    
+    hideCardDetailModal();
+    loadColumns();
+  } catch (error) {
+    console.error("Erreur lors de la suppression de la carte:", error);
+    alert("Erreur lors de la suppression: " + error.message);
+  }
+}
 
-  // Show edit modal
-  hideCardDetailModal();
-  document.getElementById("editCardModal").classList.remove("hidden");
-  document.getElementById("editCardModal").classList.add("flex");
+async function showEditCardModal(cardId) {
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!currentUser) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  try {
+    // Fermer le menu si ouvert
+    if (currentCardMenu) {
+      currentCardMenu.remove();
+      currentCardMenu = null;
+    }
+
+    // Récupérer la carte depuis l'API
+    const cards = await CardsAPI.getByBoard(currentBoardId);
+    const card = cards.find((c) => c.id == cardId);
+
+    if (!card) {
+      alert("Carte introuvable");
+      return;
+    }
+
+    // Check if current user is the creator
+    if (card.createdBy != currentUser.id) {
+      alert("Vous n'êtes pas autorisé à modifier cette carte. Seul le créateur peut la modifier.");
+      return;
+    }
+
+    // Store current card ID for editing
+    document.getElementById("editCardForm").dataset.cardId = cardId;
+
+    // Fill form with card data
+    document.getElementById("editCardTitle").value = card.title;
+    document.getElementById("editCardDescription").value = card.description || "";
+    document.getElementById("editCardPriority").value = card.priority || "low";
+    
+    // Formater la date pour l'input date (YYYY-MM-DD)
+    if (card.dueDate) {
+      const date = new Date(card.dueDate);
+      const formattedDate = date.toISOString().split('T')[0];
+      document.getElementById("editCardDueDate").value = formattedDate;
+    } else {
+      document.getElementById("editCardDueDate").value = "";
+    }
+
+    // Load assignees and set current assignee
+    await loadAssigneesForEdit(card.assigneeEmail || null);
+
+    // Show edit modal
+    hideCardDetailModal();
+    document.getElementById("editCardModal").classList.remove("hidden");
+    document.getElementById("editCardModal").classList.add("flex");
+  } catch (error) {
+    console.error("Erreur lors du chargement de la carte:", error);
+    alert("Erreur lors du chargement de la carte: " + error.message);
+  }
 }
 
 function hideEditCardModal() {
@@ -882,43 +989,32 @@ function hideEditCardModal() {
   document.getElementById("editCardModal").classList.remove("flex");
 }
 
-function updateCard(cardId, title, description, priority, dueDate, assigneeEmail = null) {
-  const cards = JSON.parse(localStorage.getItem("cards") || "[]");
-  const card = cards.find((c) => c.id === cardId);
-
-  if (!card) return;
-
-  const users = JSON.parse(localStorage.getItem("users") || "[]");
+async function updateCard(cardId, title, description, priority, dueDate, assigneeEmail = null) {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  
-  // Get assignee name
-  let assigneeName = "";
-  if (assigneeEmail) {
-    const assigneeUser = users.find((u) => u.email.toLowerCase() === assigneeEmail.toLowerCase());
-    if (assigneeUser) {
-      assigneeName = assigneeUser.name;
-    }
+  if (!currentUser) {
+    window.location.href = "login.html";
+    return;
   }
 
-  // Update card properties
-  card.title = title;
-  card.description = description;
-  card.priority = priority;
-  card.dueDate = dueDate || null;
-  card.assignees = assigneeName ? [assigneeName] : [];
-  card.assigneeEmail = assigneeEmail || null;
-  
-  // Preserve createdBy if it exists, otherwise set it to current user
-  if (!card.createdBy && currentUser) {
-    card.createdBy = currentUser.id;
-  }
+  try {
+    await CardsAPI.update({
+      id: cardId,
+      title: title.trim(),
+      description: description ? description.trim() : null,
+      priority: priority,
+      dueDate: dueDate || null,
+      assigneeEmail: assigneeEmail || null,
+    });
 
-  localStorage.setItem("cards", JSON.stringify(cards));
-  hideEditCardModal();
-  loadColumns();
+    hideEditCardModal();
+    loadColumns();
+  } catch (error) {
+    console.error("Erreur lors de la modification de la carte:", error);
+    alert("Erreur lors de la modification: " + error.message);
+  }
 }
 
-function loadAssigneesForEdit(currentAssigneeEmail = null) {
+async function loadAssigneesForEdit(currentAssigneeEmail = null) {
   const assigneeSelect = document.getElementById("editCardAssignee");
   if (!assigneeSelect) {
     console.error("editCardAssignee select not found");
@@ -931,61 +1027,66 @@ function loadAssigneesForEdit(currentAssigneeEmail = null) {
     return;
   }
   
-  const boards = JSON.parse(localStorage.getItem("boards") || "[]");
-  const board = boards.find((b) => b.id === currentBoardId);
-  
-  if (!board) {
-    console.error("Board not found");
+  if (!currentBoard) {
+    console.error("Board not loaded");
     return;
   }
   
-  // Get board owner
-  const users = JSON.parse(localStorage.getItem("users") || "[]");
-  const boardOwner = users.find((u) => u.id === board.userId);
-  
-  // Get authorized members
-  const authorizedEmails = JSON.parse(localStorage.getItem("authorizedEmails") || "{}");
-  const authorizedMembers = authorizedEmails[board.userId] || [];
-  
-  // Clear existing options except the first one
-  assigneeSelect.innerHTML = '<option value="">Sélectionner un membre</option>';
-  
-  // Add board owner
-  if (boardOwner) {
-    const option = document.createElement("option");
-    option.value = boardOwner.email;
-    const ownerLabel = boardOwner.id === currentUser.id ? `${boardOwner.name} (Moi - Propriétaire)` : `${boardOwner.name} (Propriétaire)`;
-    option.textContent = ownerLabel;
-    if (currentAssigneeEmail && boardOwner.email.toLowerCase() === currentAssigneeEmail.toLowerCase()) {
-      option.selected = true;
-    }
-    assigneeSelect.appendChild(option);
-  }
-  
-  // Add authorized members
-  authorizedMembers.forEach((member) => {
-    const memberEmail = typeof member === "string" ? member : member.email;
-    const memberName = typeof member === "string" ? member.split("@")[0] : member.name;
-    const memberUser = users.find((u) => u.email.toLowerCase() === memberEmail.toLowerCase());
+  try {
+    // Récupérer le propriétaire du tableau
+    const boardOwner = await UsersAPI.getOne(currentBoard.userId);
     
-    if (memberUser && memberUser.id !== board.userId) {
-      // Don't add owner again if already added
+    // Récupérer les membres autorisés
+    const boardAccess = await BoardAccessAPI.getAll(currentBoardId);
+    
+    // Clear existing options except the first one
+    assigneeSelect.innerHTML = '<option value="">Sélectionner un membre</option>';
+    
+    // Add board owner
+    if (boardOwner) {
       const option = document.createElement("option");
-      option.value = memberUser.email;
-      const memberLabel = memberUser.id === currentUser.id ? `${memberName} (Moi)` : memberName;
-      option.textContent = memberLabel;
-      if (currentAssigneeEmail && memberUser.email.toLowerCase() === currentAssigneeEmail.toLowerCase()) {
+      option.value = boardOwner.email;
+      const ownerLabel = boardOwner.id == currentUser.id ? `${boardOwner.name} (Moi - Propriétaire)` : `${boardOwner.name} (Propriétaire)`;
+      option.textContent = ownerLabel;
+      if (currentAssigneeEmail && boardOwner.email.toLowerCase() === currentAssigneeEmail.toLowerCase()) {
         option.selected = true;
       }
       assigneeSelect.appendChild(option);
     }
-  });
-  
-  // If current user is not in the list, add them
-  const currentUserInList = Array.from(assigneeSelect.options).some(
-    (opt) => opt.value === currentUser.email
-  );
-  if (!currentUserInList) {
+    
+    // Add authorized members
+    for (const member of boardAccess) {
+      if (member.userEmail.toLowerCase() !== boardOwner.email.toLowerCase()) {
+        const option = document.createElement("option");
+        option.value = member.userEmail;
+        const memberLabel = member.userEmail.toLowerCase() === currentUser.email.toLowerCase() ? `${member.userName} (Moi)` : member.userName;
+        option.textContent = memberLabel;
+        if (currentAssigneeEmail && member.userEmail.toLowerCase() === currentAssigneeEmail.toLowerCase()) {
+          option.selected = true;
+        }
+        assigneeSelect.appendChild(option);
+      }
+    }
+    
+    // Si l'utilisateur actuel n'est pas dans la liste (ni propriétaire ni collaborateur), l'ajouter quand même
+    const currentUserInList = Array.from(assigneeSelect.options).some(
+      (opt) => opt.value === currentUser.email
+    );
+    if (!currentUserInList) {
+      const option = document.createElement("option");
+      option.value = currentUser.email;
+      option.textContent = `${currentUser.name} (Moi)`;
+      if (currentAssigneeEmail && currentUser.email.toLowerCase() === currentAssigneeEmail.toLowerCase()) {
+        option.selected = true;
+      }
+      assigneeSelect.appendChild(option);
+    }
+    
+    console.log(`Loaded ${assigneeSelect.options.length - 1} members for edit, current assignee: ${currentAssigneeEmail || 'none'}`);
+  } catch (error) {
+    console.error("Erreur lors du chargement des assignés:", error);
+    // En cas d'erreur, au moins ajouter l'utilisateur actuel
+    assigneeSelect.innerHTML = '<option value="">Sélectionner un membre</option>';
     const option = document.createElement("option");
     option.value = currentUser.email;
     option.textContent = `${currentUser.name} (Moi)`;
@@ -994,18 +1095,6 @@ function loadAssigneesForEdit(currentAssigneeEmail = null) {
     }
     assigneeSelect.appendChild(option);
   }
-  
-  // If no assignee selected and no currentAssigneeEmail, select current user
-  if (!currentAssigneeEmail && assigneeSelect.selectedIndex === 0) {
-    const currentUserOption = Array.from(assigneeSelect.options).find(
-      (opt) => opt.value === currentUser.email
-    );
-    if (currentUserOption) {
-      currentUserOption.selected = true;
-    }
-  }
-  
-  console.log(`Loaded ${assigneeSelect.options.length - 1} members for edit, current assignee: ${currentAssigneeEmail || 'none'}`);
 }
 
 function showInviteModal() {
