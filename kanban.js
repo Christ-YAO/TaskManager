@@ -729,6 +729,7 @@ function showCardDetail(cardId) {
 
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   const isCreator = card.createdBy === currentUser.id;
+  const isAdmin = currentUser.role === "admin";
 
   const priorityColors = {
     high: "bg-red-500",
@@ -801,7 +802,7 @@ function showCardDetail(cardId) {
         </div>
         <div class="flex space-x-4 pt-4 border-t border-border">
             ${
-              isCreator
+              isCreator || isAdmin
                 ? `
             <button onclick="showEditCardModal('${
               card.id
@@ -856,8 +857,9 @@ async function showCardMenu(cardId, event) {
       return;
     }
 
-    // Vérifier si l'utilisateur est le créateur
+    // Vérifier si l'utilisateur est le créateur ou admin
     const isCreator = card.createdBy == currentUser.id;
+    const isAdmin = currentUser.role === "admin";
 
     const menu = document.createElement("div");
     menu.className =
@@ -865,7 +867,7 @@ async function showCardMenu(cardId, event) {
     menu.onclick = (e) => e.stopPropagation();
     menu.innerHTML = `
             ${
-              isCreator
+              isCreator || isAdmin
                 ? `
             <button onclick="event.stopPropagation(); showEditCardModal('${cardId}'); return false;" class="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors flex items-center space-x-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -955,9 +957,9 @@ async function showEditCardModal(cardId) {
       return;
     }
 
-    // Check if current user is the creator
-    if (card.createdBy != currentUser.id) {
-      alert("Vous n'êtes pas autorisé à modifier cette carte. Seul le créateur peut la modifier.");
+    // Check if current user is the creator or admin
+    if (card.createdBy != currentUser.id && currentUser.role !== "admin") {
+      alert("Vous n'êtes pas autorisé à modifier cette carte. Seul le créateur ou l'admin peut la modifier.");
       return;
     }
 
