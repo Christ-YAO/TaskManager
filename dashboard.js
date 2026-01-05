@@ -482,14 +482,20 @@ function createBoardCard(board) {
       cardCount > 1 ? "s" : ""
     }</span>
                     </div>
+                    ${
+                      completedCount > 0
+                        ? `
                     <div class="flex items-center space-x-1.5">
                         <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <span class="text-sm text-green-600 font-medium">${completedCount} terminée${
-      completedCount > 1 ? "s" : ""
-    }</span>
+                            completedCount > 1 ? "s" : ""
+                          }</span>
                     </div>
+                    `
+                        : ""
+                    }
                 </div>
             </div>
         `;
@@ -508,10 +514,14 @@ function createBoardCard(board) {
                 }</h3>
                 <div class="flex items-center space-x-4 text-muted-foreground text-sm">
                     <span>${cardCount} carte${cardCount > 1 ? "s" : ""}</span>
-                    <span>•</span>
+                    ${
+                      completedCount > 0
+                        ? `<span>•</span>
                     <span class="text-green-600 font-medium">${completedCount} terminée${
-      completedCount > 1 ? "s" : ""
-    }</span>
+                            completedCount > 1 ? "s" : ""
+                          }</span>`
+                        : ""
+                    }
                     <span>•</span>
                     <span>Créé le ${new Date(
                       board.createdAt
@@ -632,7 +642,7 @@ async function showBoardMenu(boardId, event) {
     menu.onclick = (e) => e.stopPropagation(); // Prevent card click when clicking menu
     menu.innerHTML = `
             ${
-              isCreator
+              isCreator || isAdmin
                 ? `
             <button onclick="event.stopPropagation(); editBoard('${boardId}'); return false;" class="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors flex items-center space-x-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
