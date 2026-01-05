@@ -86,6 +86,33 @@ if ($method === 'POST') {
     }
     
     try {
+        // Vérifier que la colonne existe et appartient au tableau
+        $stmt = $pdo->prepare("SELECT id FROM columns WHERE id = :column_id AND board_id = :board_id");
+        $stmt->execute([':column_id' => $columnId, ':board_id' => $boardId]);
+        $column = $stmt->fetch();
+        if (!$column) {
+            sendResponse(false, 'La colonne spécifiée n\'existe pas ou n\'appartient pas à ce tableau.');
+        }
+        
+        // Vérifier que created_by existe
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE id = :id");
+        $stmt->execute([':id' => $createdBy]);
+        $user = $stmt->fetch();
+        if (!$user) {
+            sendResponse(false, 'L\'utilisateur créateur n\'existe pas.');
+        }
+        
+        // Convertir la date au format DATETIME si nécessaire
+        $dueDateFormatted = null;
+        if ($dueDate) {
+            // Si c'est juste une date (YYYY-MM-DD), ajouter l'heure
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
+                $dueDateFormatted = $dueDate . ' 23:59:59';
+            } else {
+                $dueDateFormatted = $dueDate;
+            }
+        }
+        
         // Trouver le max order dans la colonne
         $stmt = $pdo->prepare("SELECT MAX(`order`) as max_order FROM cards WHERE column_id = :column_id");
         $stmt->execute([':column_id' => $columnId]);
@@ -99,14 +126,14 @@ if ($method === 'POST') {
         ");
         
         $stmt->execute([
-            ':board_id' => $boardId,
-            ':column_id' => $columnId,
+            ':board_id' => (int)$boardId,
+            ':column_id' => (int)$columnId,
             ':title' => $title,
             ':description' => $description ?: null,
             ':priority' => $priority,
-            ':due_date' => $dueDate ?: null,
+            ':due_date' => $dueDateFormatted,
             ':assignee_email' => $assigneeEmail ?: null,
-            ':created_by' => $createdBy,
+            ':created_by' => (int)$createdBy,
             ':order' => $newOrder
         ]);
         
@@ -128,7 +155,14 @@ if ($method === 'POST') {
         
     } catch (PDOException $e) {
         error_log("Erreur: " . $e->getMessage());
-        sendResponse(false, 'Erreur lors de la création.');
+        error_log("Board ID: " . $boardId . ", Column ID: " . $columnId . ", Created By: " . $createdBy);
+        
+        // Vérifier si c'est une erreur de clé étrangère
+        if (strpos($e->getMessage(), 'foreign key') !== false || strpos($e->getMessage(), '1452') !== false) {
+            sendResponse(false, 'Erreur: Le tableau, la colonne ou l\'utilisateur spécifié n\'existe pas.');
+        } else {
+            sendResponse(false, 'Erreur lors de la création: ' . $e->getMessage());
+        }
     }
 }
 

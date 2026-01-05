@@ -113,16 +113,11 @@ async function loadBoard() {
   }
 }
 
-function loadColumns() {
+async function loadColumns() {
   if (!currentBoardId) {
     console.error("No board ID available");
     return;
   }
-
-  const columns = JSON.parse(localStorage.getItem("columns") || "[]");
-  const boardColumns = columns
-    .filter((c) => c.boardId === currentBoardId)
-    .sort((a, b) => a.order - b.order);
 
   const container = document.getElementById("kanbanContainer");
   if (!container) {
@@ -134,30 +129,41 @@ function loadColumns() {
     return;
   }
 
-  container.innerHTML = "";
+  try {
+    // Récupérer les colonnes et les cartes via l'API
+    const [columns, cards] = await Promise.all([
+      ColumnsAPI.getAll(currentBoardId),
+      CardsAPI.getByBoard(currentBoardId)
+    ]);
+    
+    container.innerHTML = "";
 
-  if (boardColumns.length === 0) {
-    // Create default columns
-    createDefaultColumns();
-    return;
-  }
-
-  console.log(
-    `Found ${boardColumns.length} columns for board ${currentBoardId}`
-  );
-
-  boardColumns.forEach((column, index) => {
-    console.log(`Creating column ${index + 1}:`, column.name);
-    const columnElement = createColumnElement(column);
-    if (columnElement) {
-      container.appendChild(columnElement);
-      console.log(`Column "${column.name}" added successfully`);
-    } else {
-      console.error(`Failed to create column element for:`, column);
+    if (!columns || columns.length === 0) {
+      // Les colonnes par défaut sont normalement créées lors de la création du tableau
+      // Mais si elles n'existent pas, on affiche un message
+      container.innerHTML = '<div class="text-center p-8 text-muted-foreground">Aucune colonne trouvée</div>';
+      console.log("No columns found for board:", currentBoardId);
+      return;
     }
-  });
 
-  console.log(`Total columns displayed: ${container.children.length}`);
+    console.log(`Found ${columns.length} columns and ${cards.length} cards for board ${currentBoardId}`);
+
+    columns.forEach((column, index) => {
+      console.log(`Creating column ${index + 1}:`, column.name);
+      const columnElement = createColumnElement(column, cards || []);
+      if (columnElement) {
+        container.appendChild(columnElement);
+        console.log(`Column "${column.name}" added successfully`);
+      } else {
+        console.error(`Failed to create column element for:`, column);
+      }
+    });
+
+    console.log(`Total columns displayed: ${container.children.length}`);
+  } catch (error) {
+    console.error("Erreur lors du chargement des colonnes:", error);
+    container.innerHTML = '<div class="text-center p-8 text-red-500">Erreur lors du chargement des colonnes</div>';
+  }
 }
 
 function createDefaultColumns() {
@@ -194,7 +200,7 @@ function createDefaultColumns() {
   }, 50);
 }
 
-function createColumnElement(column) {
+function createColumnElement(column, allCards = []) {
   if (!column || !column.id) {
     console.error("Invalid column data:", column);
     return null;
@@ -205,7 +211,10 @@ function createColumnElement(column) {
     "kanban-column bg-muted/30 border border-border rounded-lg p-4 min-w-[320px] max-w-[320px] flex flex-col h-full";
   columnDiv.dataset.columnId = column.id;
 
-  const cards = getCardsForColumn(column.id);
+  // Filtrer les cartes pour cette colonne
+  const cards = allCards
+    .filter((c) => c.columnId == column.id)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 
   columnDiv.innerHTML = `
         <div class="flex justify-between items-center mb-4">
@@ -233,7 +242,7 @@ function createColumnElement(column) {
         <div class="cards-container space-y-3 flex-1 overflow-y-auto pb-2" data-column-id="${
           column.id
         }">
-            ${cards.map((card) => createCardHTML(card)).join("")}
+            ${cards.map((card) => createCardHTML(card, column.name)).join("")}
         </div>
         <button onclick="showAddCardModal('${
           column.id
@@ -266,7 +275,7 @@ function getInitials(fullName) {
   return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
 }
 
-function createCardHTML(card) {
+function createCardHTML(card, columnName = "") {
   const priorityColors = {
     high: "bg-red-500",
     medium: "bg-yellow-500",
@@ -286,9 +295,7 @@ function createCardHTML(card) {
   const assignees = card.assignees || [];
 
   // Check if card is in "Done" column
-  const columns = JSON.parse(localStorage.getItem("columns") || "[]");
-  const cardColumn = columns.find((c) => c.id === card.columnId);
-  const isDone = cardColumn && cardColumn.name.toLowerCase() === "done";
+  const isDone = columnName && columnName.toLowerCase() === "done";
   const strikeThroughClass = isDone ? "line-through opacity-75" : "";
 
   return `
@@ -401,65 +408,16 @@ function formatDueDate(dateString) {
   }
 }
 
-function getCardsForColumn(columnId) {
-  const cards = JSON.parse(localStorage.getItem("cards") || "[]");
-  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  const boards = JSON.parse(localStorage.getItem("boards") || "[]");
-  const board = boards.find((b) => b.id === currentBoardId);
-  
-  if (!board || !currentUser) {
-    return cards
-      .filter((c) => c.columnId === columnId)
-      .sort((a, b) => a.order - b.order);
-  }
-  
-  // If user is the board owner, show all cards
-  if (board.userId === currentUser.id) {
-    return cards
-      .filter((c) => c.columnId === columnId)
-      .sort((a, b) => a.order - b.order);
-  }
-  
-  // If user is an authorized member, filter cards by who added them
-  const authorizedEmails = JSON.parse(localStorage.getItem("authorizedEmails") || "{}");
-  
-  // Check if user is authorized to access this board
-  const authorizedMembers = authorizedEmails[board.userId] || [];
-  const isAuthorized = authorizedMembers.some(member => {
-    const memberEmail = typeof member === "string" ? member : member.email;
-    return memberEmail.toLowerCase() === currentUser.email.toLowerCase();
-  });
-  
-  if (!isAuthorized) {
-    // User is not authorized, return empty array
+// Cette fonction n'est plus utilisée - les cartes sont chargées dans loadColumns()
+// Conservée pour référence/compatibilité si nécessaire ailleurs
+async function getCardsForColumn(columnId) {
+  try {
+    const cards = await CardsAPI.getByColumn(columnId);
+    return cards || [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des cartes:", error);
     return [];
   }
-  
-  // Find who added the current user
-  let addedByUserId = null;
-  for (const member of authorizedMembers) {
-    const memberEmail = typeof member === "string" ? member : member.email;
-    if (memberEmail.toLowerCase() === currentUser.email.toLowerCase()) {
-      addedByUserId = typeof member === "object" ? member.addedBy : null;
-      break;
-    }
-  }
-  
-  // If addedBy is not set (legacy member or added by owner), show cards created by board owner
-  // If addedBy is set, show cards created by that person OR by the current member
-  const targetCreatorId = addedByUserId || board.userId;
-  
-  // Filter cards created by the target creator OR by the current member
-  return cards
-    .filter((c) => {
-      if (c.columnId !== columnId) return false;
-      // If card doesn't have createdBy (legacy), assume it was created by board owner
-      const cardCreator = c.createdBy || board.userId;
-      // Show cards created by the target creator (person who added member or board owner)
-      // OR cards created by the current member themselves
-      return cardCreator === targetCreatorId || c.createdBy === currentUser.id;
-    })
-    .sort((a, b) => a.order - b.order);
 }
 
 function setupDragAndDrop(cardsContainer, columnElement) {
@@ -610,7 +568,7 @@ function hideAddCardModal() {
   }
 }
 
-function loadAssignees() {
+async function loadAssignees() {
   const assigneeSelect = document.getElementById("cardAssignee");
   if (!assigneeSelect) {
     console.error("cardAssignee select not found");
@@ -623,72 +581,74 @@ function loadAssignees() {
     return;
   }
   
-  const boards = JSON.parse(localStorage.getItem("boards") || "[]");
-  const board = boards.find((b) => b.id === currentBoardId);
-  
-  if (!board) {
-    console.error("Board not found");
+  if (!currentBoard) {
+    console.error("Board not loaded");
     return;
   }
   
-  // Get board owner
-  const users = JSON.parse(localStorage.getItem("users") || "[]");
-  const boardOwner = users.find((u) => u.id === board.userId);
-  
-  // Get authorized members
-  const authorizedEmails = JSON.parse(localStorage.getItem("authorizedEmails") || "{}");
-  const authorizedMembers = authorizedEmails[board.userId] || [];
-  
-  // Clear existing options except the first one
-  assigneeSelect.innerHTML = '<option value="">Sélectionner un membre</option>';
-  
-  // Add board owner
-  if (boardOwner) {
-    const option = document.createElement("option");
-    option.value = boardOwner.email;
-    const ownerLabel = boardOwner.id === currentUser.id ? `${boardOwner.name} (Moi - Propriétaire)` : `${boardOwner.name} (Propriétaire)`;
-    option.textContent = ownerLabel;
-    if (boardOwner.id === currentUser.id) {
-      option.selected = true;
-    }
-    assigneeSelect.appendChild(option);
-  }
-  
-  // Add authorized members
-  authorizedMembers.forEach((member) => {
-    const memberEmail = typeof member === "string" ? member : member.email;
-    const memberName = typeof member === "string" ? member.split("@")[0] : member.name;
-    const memberUser = users.find((u) => u.email.toLowerCase() === memberEmail.toLowerCase());
+  try {
+    // Récupérer le propriétaire du tableau
+    const boardOwner = await UsersAPI.getOne(currentBoard.userId);
     
-    if (memberUser && memberUser.id !== board.userId) {
-      // Don't add owner again if already added
+    // Récupérer les collaborateurs du tableau
+    const collaborators = await BoardAccessAPI.getAll(currentBoardId);
+    
+    // Clear existing options except the first one
+    assigneeSelect.innerHTML = '<option value="">Sélectionner un membre</option>';
+    
+    // Add board owner (créateur)
+    if (boardOwner) {
       const option = document.createElement("option");
-      option.value = memberUser.email;
-      const memberLabel = memberUser.id === currentUser.id ? `${memberName} (Moi)` : memberName;
-      option.textContent = memberLabel;
-      if (memberUser.id === currentUser.id && !boardOwner) {
+      option.value = boardOwner.email;
+      const ownerLabel = boardOwner.id == currentUser.id 
+        ? `${boardOwner.name} (Moi - Propriétaire)` 
+        : `${boardOwner.name} (Propriétaire)`;
+      option.textContent = ownerLabel;
+      if (boardOwner.id == currentUser.id) {
         option.selected = true;
       }
       assigneeSelect.appendChild(option);
     }
-  });
-  
-  // If current user is not in the list, add them
-  const currentUserInList = Array.from(assigneeSelect.options).some(
-    (opt) => opt.value === currentUser.email
-  );
-  if (!currentUserInList) {
+    
+    // Add collaborators
+    if (collaborators && Array.isArray(collaborators)) {
+      collaborators.forEach((collaborator) => {
+        const option = document.createElement("option");
+        option.value = collaborator.userEmail;
+        const collaboratorLabel = collaborator.userEmail.toLowerCase() === currentUser.email.toLowerCase()
+          ? `${collaborator.userName} (Moi)`
+          : collaborator.userName;
+        option.textContent = collaboratorLabel;
+        assigneeSelect.appendChild(option);
+      });
+    }
+    
+    // Si l'utilisateur actuel n'est pas dans la liste (ni propriétaire ni collaborateur), l'ajouter quand même
+    const currentUserInList = Array.from(assigneeSelect.options).some(
+      (opt) => opt.value === currentUser.email
+    );
+    if (!currentUserInList) {
+      const option = document.createElement("option");
+      option.value = currentUser.email;
+      option.textContent = `${currentUser.name} (Moi)`;
+      option.selected = true;
+      assigneeSelect.appendChild(option);
+    }
+    
+    console.log(`Loaded ${assigneeSelect.options.length - 1} members for assignment`);
+  } catch (error) {
+    console.error("Erreur lors du chargement des assignés:", error);
+    // En cas d'erreur, au moins ajouter l'utilisateur actuel
+    assigneeSelect.innerHTML = '<option value="">Sélectionner un membre</option>';
     const option = document.createElement("option");
     option.value = currentUser.email;
     option.textContent = `${currentUser.name} (Moi)`;
     option.selected = true;
     assigneeSelect.appendChild(option);
   }
-  
-  console.log(`Loaded ${assigneeSelect.options.length - 1} members for assignment`);
 }
 
-function createCard(
+async function createCard(
   title,
   description,
   columnId,
@@ -696,48 +656,36 @@ function createCard(
   dueDate = null,
   assigneeEmail = null
 ) {
-  const cards = JSON.parse(localStorage.getItem("cards") || "[]");
-  const columnCards = cards.filter((c) => c.columnId === columnId);
-  const maxOrder =
-    columnCards.length > 0 ? Math.max(...columnCards.map((c) => c.order)) : -1;
-
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  const users = JSON.parse(localStorage.getItem("users") || "[]");
-  
-  // Get assignee name
-  let assigneeName = currentUser ? currentUser.name : "";
-  if (assigneeEmail) {
-    const assigneeUser = users.find((u) => u.email.toLowerCase() === assigneeEmail.toLowerCase());
-    if (assigneeUser) {
-      assigneeName = assigneeUser.name;
-    }
+  if (!currentUser) {
+    window.location.href = "login.html";
+    return;
   }
 
-  const newCard = {
-    id: Date.now().toString(),
-    boardId: currentBoardId,
-    columnId: columnId,
-    title: title,
-    description: description,
-    priority: priority,
-    dueDate: dueDate || null,
-    attachments: 0,
-    comments: 0,
-    assignees: assigneeName ? [assigneeName] : [],
-    assigneeEmail: assigneeEmail || null,
-    createdBy: currentUser.id, // Track who created the card
-    order: maxOrder + 1,
-    createdAt: new Date().toISOString(),
-  };
+  if (!currentBoardId || !columnId || !title) {
+    alert("Informations manquantes pour créer la carte");
+    return;
+  }
 
-  cards.push(newCard);
-  localStorage.setItem("cards", JSON.stringify(cards));
+  try {
+    // Créer la carte via l'API
+    await CardsAPI.create({
+      boardId: currentBoardId,
+      columnId: columnId,
+      title: title.trim(),
+      description: description ? description.trim() : null,
+      priority: priority,
+      dueDate: dueDate || null,
+      assigneeEmail: assigneeEmail || null,
+      createdBy: currentUser.id,
+    });
 
-  // Update board card count
-  updateBoardCardCount();
-
-  hideAddCardModal();
-  loadColumns();
+    hideAddCardModal();
+    loadColumns();
+  } catch (error) {
+    console.error("Erreur lors de la création de la carte:", error);
+    alert("Erreur lors de la création de la carte: " + error.message);
+  }
 }
 
 function updateBoardCardCount() {
