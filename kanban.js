@@ -460,15 +460,28 @@ function setupDragAndDrop(cardsContainer, columnElement) {
   });
 }
 
-function moveCard(cardId, fromColumnId, toColumnId) {
-  const cards = JSON.parse(localStorage.getItem("cards") || "[]");
-  const card = cards.find((c) => c.id === cardId);
+async function moveCard(cardId, fromColumnId, toColumnId) {
+  try {
+    // Si la carte est déplacée dans la même colonne, ne rien faire
+    if (fromColumnId === toColumnId) {
+      return;
+    }
 
-  if (card) {
-    card.columnId = toColumnId;
-    card.order = Date.now(); // Simple ordering
-    localStorage.setItem("cards", JSON.stringify(cards));
-    loadColumns();
+    // Calculer le nouvel ordre (mettre à la fin de la colonne pour l'instant)
+    // L'API calculera automatiquement l'ordre si order n'est pas fourni
+    await CardsAPI.move({
+      cardId: cardId,
+      columnId: toColumnId,
+      order: null // L'API calculera l'ordre automatiquement (à la fin)
+    });
+
+    // Recharger les colonnes pour afficher la nouvelle position
+    await loadColumns();
+  } catch (error) {
+    console.error("Erreur lors du déplacement de la carte:", error);
+    alert("Erreur lors du déplacement de la carte: " + error.message);
+    // Recharger les colonnes pour réinitialiser l'affichage en cas d'erreur
+    await loadColumns();
   }
 }
 
