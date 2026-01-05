@@ -83,12 +83,6 @@ async function loadBoard() {
           .toUpperCase();
       
       // Show add collaborator button for admin or board owner
-      const addCollaboratorBtn = document.getElementById("addCollaboratorBtn");
-      const isAdmin = currentUser.role === "admin";
-      const isOwner = currentBoard.userId == currentUser.id;
-      if (addCollaboratorBtn && (isAdmin || isOwner)) {
-        addCollaboratorBtn.classList.remove("hidden");
-      }
     }
 
     // Load columns - ensure DOM is ready
