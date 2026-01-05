@@ -44,7 +44,10 @@ if ($method === 'GET') {
         if ($boardId) {
             $stmt = $pdo->prepare("
                 SELECT b.*, 
-                       (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count
+                       (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count,
+                       (SELECT COUNT(*) FROM cards c 
+                        INNER JOIN columns col ON c.column_id = col.id 
+                        WHERE c.board_id = b.id AND LOWER(col.name) = 'done') as completed_count
                 FROM boards b 
                 WHERE b.id = :id
             ");
@@ -98,7 +101,10 @@ if ($method === 'GET') {
                 // Admin voit tous les tableaux
                 $stmt = $pdo->prepare("
                     SELECT b.*, 
-                           (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count
+                           (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count,
+                           (SELECT COUNT(*) FROM cards c 
+                            INNER JOIN columns col ON c.column_id = col.id 
+                            WHERE c.board_id = b.id AND LOWER(col.name) = 'done') as completed_count
                     FROM boards b
                     ORDER BY b.created_at DESC
                 ");
@@ -107,7 +113,10 @@ if ($method === 'GET') {
                 // Utilisateur voit ses tableaux + ceux où il est collaborateur
                 $stmt = $pdo->prepare("
                     SELECT DISTINCT b.*, 
-                           (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count
+                           (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count,
+                           (SELECT COUNT(*) FROM cards c 
+                            INNER JOIN columns col ON c.column_id = col.id 
+                            WHERE c.board_id = b.id AND LOWER(col.name) = 'done') as completed_count
                     FROM boards b
                     LEFT JOIN board_access ba ON b.id = ba.board_id
                     WHERE b.user_id = :user_id OR ba.user_email = :user_email
@@ -199,7 +208,10 @@ if ($method === 'POST') {
         // Récupérer le tableau créé
         $stmt = $pdo->prepare("
             SELECT b.*, 
-                   (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count
+                   (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count,
+                   (SELECT COUNT(*) FROM cards c 
+                    INNER JOIN columns col ON c.column_id = col.id 
+                    WHERE c.board_id = b.id AND LOWER(col.name) = 'done') as completed_count
             FROM boards b
             WHERE b.id = :id
         ");
@@ -273,7 +285,10 @@ if ($method === 'PUT') {
         // Récupérer le tableau modifié
         $stmt = $pdo->prepare("
             SELECT b.*, 
-                   (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count
+                   (SELECT COUNT(*) FROM cards WHERE board_id = b.id) as card_count,
+                   (SELECT COUNT(*) FROM cards c 
+                    INNER JOIN columns col ON c.column_id = col.id 
+                    WHERE c.board_id = b.id AND LOWER(col.name) = 'done') as completed_count
             FROM boards b
             WHERE b.id = :id
         ");

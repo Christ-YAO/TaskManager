@@ -173,7 +173,7 @@ async function loadStats() {
           );
         }
       }
-      displayStats(userBoards, allCards);
+      await displayStats(userBoards, allCards);
       return;
     }
 
@@ -192,28 +192,57 @@ async function loadStats() {
       }
     }
 
-    displayStats(boards, allCards);
+    await displayStats(boards, allCards);
   } catch (error) {
     console.error("Erreur lors du chargement des statistiques:", error);
     // Ne pas afficher d'erreur pour les stats, juste log
   }
 }
 
-function displayStats(userBoards, userCards) {
+async function displayStats(userBoards, userCards) {
   const statsSection = document.getElementById("statsSection");
   if (!statsSection) return;
 
   const totalCards = userCards.length;
-  const completedCards = userCards.filter((c) => {
-    const columns = JSON.parse(localStorage.getItem("columns") || "[]");
-    const column = columns.find((col) => col.id === c.columnId);
-    return (
-      column &&
-      (column.name.toLowerCase().includes("terminé") ||
-        column.name.toLowerCase().includes("done") ||
-        column.name.toLowerCase().includes("complété"))
-    );
-  }).length;
+
+  // Calculer les cartes complétées en vérifiant dans quelle colonne elles sont
+  // Pour chaque carte, charger la colonne et vérifier si elle s'appelle "Done"
+  let completedCards = 0;
+  try {
+    // Créer un cache des colonnes par board pour éviter les requêtes multiples
+    const columnsCache = new Map();
+
+    for (const card of userCards) {
+      const boardId = card.boardId || card.board_id;
+      if (!boardId) continue;
+
+      if (!columnsCache.has(boardId)) {
+        try {
+          const columns = await ColumnsAPI.getAll(boardId);
+          columnsCache.set(boardId, columns);
+        } catch (error) {
+          console.error(
+            `Erreur lors du chargement des colonnes pour le board ${boardId}:`,
+            error
+          );
+          columnsCache.set(boardId, []);
+        }
+      }
+
+      const columns = columnsCache.get(boardId);
+      const column = columns.find(
+        (col) => col.id == card.columnId || col.id == card.column_id
+      );
+
+      if (column && column.name && column.name.toLowerCase() === "done") {
+        completedCards++;
+      }
+    }
+  } catch (error) {
+    console.error("Erreur lors du calcul des cartes complétées:", error);
+    // En cas d'erreur, utiliser une valeur par défaut
+    completedCards = 0;
+  }
 
   statsSection.innerHTML = `
         <div class="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-6 hover:shadow-lg transition-shadow">
@@ -401,8 +430,9 @@ function createBoardCard(board) {
   };
 
   const colors = colorMap[board.color] || colorMap.blue;
-  // Utiliser cardCount de l'API (déjà calculé dans boards.php)
+  // Utiliser cardCount et completedCount de l'API (déjà calculés dans boards.php)
   const cardCount = board.cardCount || board.card_count || 0;
+  const completedCount = board.completedCount || board.completed_count || 0;
 
   if (currentView === "grid") {
     card.innerHTML = `
@@ -443,13 +473,23 @@ function createBoardCard(board) {
                 <h3 class="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors cursor-pointer">${
                   board.name
                 }</h3>
-                <div class="flex items-center space-x-2 text-muted-foreground">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <span class="text-sm">${cardCount} carte${
+                <div class="flex items-center space-x-4 text-muted-foreground">
+                    <div class="flex items-center space-x-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span class="text-sm">${cardCount} carte${
       cardCount > 1 ? "s" : ""
     }</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm text-green-600 font-medium">${completedCount} terminée${
+      completedCount > 1 ? "s" : ""
+    }</span>
+                    </div>
                 </div>
             </div>
         `;
@@ -468,6 +508,10 @@ function createBoardCard(board) {
                 }</h3>
                 <div class="flex items-center space-x-4 text-muted-foreground text-sm">
                     <span>${cardCount} carte${cardCount > 1 ? "s" : ""}</span>
+                    <span>•</span>
+                    <span class="text-green-600 font-medium">${completedCount} terminée${
+      completedCount > 1 ? "s" : ""
+    }</span>
                     <span>•</span>
                     <span>Créé le ${new Date(
                       board.createdAt
