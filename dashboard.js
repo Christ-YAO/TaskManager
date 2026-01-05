@@ -401,9 +401,8 @@ function createBoardCard(board) {
   };
 
   const colors = colorMap[board.color] || colorMap.blue;
-  const cards = JSON.parse(localStorage.getItem("cards") || "[]");
-  const boardCards = cards.filter((c) => c.boardId === board.id);
-  const cardCount = boardCards.length;
+  // Utiliser cardCount de l'API (déjà calculé dans boards.php)
+  const cardCount = board.cardCount || board.card_count || 0;
 
   if (currentView === "grid") {
     card.innerHTML = `
@@ -417,8 +416,13 @@ function createBoardCard(board) {
                     </svg>
                 </div>
                 <div class="absolute top-4 right-4 flex items-center space-x-2">
-                    <div class="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                        <span class="text-white text-sm font-semibold">${cardCount}</span>
+                    <div class="bg-white/30 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-white/40">
+                        <div class="flex items-center space-x-1.5">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="text-white text-sm font-bold">${cardCount}</span>
+                        </div>
                     </div>
                     ${
                       isCreator || isAdmin
